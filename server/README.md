@@ -89,7 +89,7 @@ https://lucid.app/lucidspark/8ddf0509-e9f4-4216-ba67-1b5fc68fb627/edit?viewport_
   - `GET /api/applications/:userId`
 
 ### 4. Dashboard Terpisah User & Perusahaan
-- ⚠️ Kolom `role` **belum tersedia** di tabel `users`, belum ada logika otorisasi berdasarkan role.
+- ⚠️ Kolom `role` **sudah** di tabel `users`, belum ada logika otorisasi berdasarkan role.
 
 ### 5. Apply Lamaran Secara Online
 - ✅ Endpoint: `POST /api/upload-cv`
@@ -164,6 +164,4 @@ https://lucid.app/lucidspark/8ddf0509-e9f4-4216-ba67-1b5fc68fb627/edit?viewport_
 | Fitur Inovatif                         | ❌     | Belum dikembangkan                                                    |
 
 ---
-
-> Jika perlu diformat ke PDF atau file lain (DOCX, HTML), tinggal bilang saja.
  
