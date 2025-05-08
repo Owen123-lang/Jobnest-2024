@@ -2,7 +2,7 @@
 
 ## Fitur Utama
 
-### 🔹 Target Utama
+###  Target Utama
 1. **Manajemen Lowongan kerja dan Magang**
     - Backend nyiapin struktur tabel jobs di PostgreSQL
     - kolom: title, company, location, work_mode, job_type, description, qualification, salary_range, dst
@@ -52,7 +52,7 @@
 10. **Penyimpanan Lowongan Favorit**
     - Rencana tabel favorites menyimpan job yang disimpan user.
 
-### 🔹 Fitur Inovatif (Coming Soon)( sebenernya gak harus semua tapi minimal 1 dikerjain dan bisa.)
+###  Fitur Inovatif (Coming Soon)( sebenernya gak harus semua tapi minimal 1 dikerjain dan bisa.)
 - [ ] Simulasi Interview
 - [ ] Rekomendasi AI (Career Recommender)
 - [ ] Forum komunitas karier (discussion board)
