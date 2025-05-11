@@ -15,3 +15,10 @@ export const verifyToken = (req, res, next) => {
     res.status(400).json({ message: "Invalid token." });
   }
 };
+
+export const checkCompanyRole = (req, res, next) => {
+  if (req.user.role !== 'company') {
+    return res.status(403).json({ message: "Forbidden: Only company allowed." });
+  }
+  next();
+};

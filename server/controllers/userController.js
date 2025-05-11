@@ -4,7 +4,7 @@ import pool from "../config/db.js";
 
 // === REGISTER ===
 export const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields are required." });
@@ -19,9 +19,12 @@ export const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Default role is 'user' if not specified
+    const userRole = role === 'company' ? 'company' : 'user';
+
     const newUser = await pool.query(
-      "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email",
-      [name, email, hashedPassword]
+      "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role",
+      [name, email, hashedPassword, userRole]
     );
 
     res.status(201).json({
@@ -56,7 +59,7 @@ export const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
@@ -67,7 +70,8 @@ export const loginUser = async (req, res) => {
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        role: user.role
       }
     });
 
