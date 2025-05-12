@@ -164,4 +164,222 @@ https://lucid.app/lucidspark/8ddf0509-e9f4-4216-ba67-1b5fc68fb627/edit?viewport_
 | Fitur Inovatif                         | ❌     | Belum dikembangkan                                                    |
 
 ---
+
+# 🧠 Backend Jobnest 2024 – 2025
+
+## ✅ Progress Selesai: CRUD untuk Lowongan + Role Proteksi
+
+---
+
+### 1. 🔐 Middleware `verifyToken` & `checkCompanyRole`
+
+```js
+// authMiddleware.js
+import jwt from "jsonwebtoken";
+
+export const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "Access denied. No token provided." });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(400).json({ message: "Invalid token." });
+  }
+};
+
+export const checkCompanyRole = (req, res, next) => {
+  if (req.user.role !== 'company') {
+    return res.status(403).json({ message: "Forbidden: Only company allowed." });
+  }
+  next();
+};
+```
+
+---
+
+### 2. 🧾 Job Controller (`controllers/jobController.js`)
+
+```js
+import pool from "../config/db.js";
+
+export const createJob = async (req, res) => {
+  const { title, description, company, location, work_mode, job_type, salary_range, qualifications, responsibilities } = req.body;
+  if (!title || !description || !company) return res.status(400).json({ message: "Title, description, and company are required." });
+
+  try {
+    const result = await pool.query(\`
+      INSERT INTO jobs (title, description, company, location, work_mode, job_type, salary_range, qualifications, responsibilities, created_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW()) RETURNING *;
+    \`, [title, description, company, location, work_mode, job_type, salary_range, qualifications, responsibilities]);
+
+    res.status(201).json({ message: "Job created successfully", job: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const getAllJobs = async (_, res) => {
+  try {
+    const result = await pool.query(\`SELECT * FROM jobs ORDER BY created_at DESC\`);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const getJobById = async (req, res) => {
+  const jobId = parseInt(req.params.id);
+  if (!jobId || isNaN(jobId)) return res.status(400).json({ message: "Valid job ID is required." });
+
+  try {
+    const result = await pool.query(\`SELECT * FROM jobs WHERE id = $1\`, [jobId]);
+    if (result.rows.length === 0) return res.status(404).json({ message: "Job not found." });
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const updateJob = async (req, res) => {
+  const jobId = parseInt(req.params.id);
+  const { title, description, company, location, work_mode, job_type, salary_range, qualifications, responsibilities } = req.body;
+
+  try {
+    const check = await pool.query(\`SELECT * FROM jobs WHERE id = $1\`, [jobId]);
+    if (check.rows.length === 0) return res.status(404).json({ message: "Job not found." });
+
+    const job = check.rows[0];
+    const result = await pool.query(\`
+      UPDATE jobs SET 
+        title=$1, description=$2, company=$3, location=$4, work_mode=$5, 
+        job_type=$6, salary_range=$7, qualifications=$8, responsibilities=$9
+      WHERE id=$10 RETURNING *;
+    \`, [
+      title || job.title, description || job.description, company || job.company,
+      location ?? job.location, work_mode ?? job.work_mode,
+      job_type ?? job.job_type, salary_range ?? job.salary_range,
+      qualifications ?? job.qualifications, responsibilities ?? job.responsibilities,
+      jobId
+    ]);
+
+    res.status(200).json({ message: "Job updated successfully", job: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const deleteJob = async (req, res) => {
+  const jobId = parseInt(req.params.id);
+  try {
+    const check = await pool.query(\`SELECT * FROM jobs WHERE id = $1\`, [jobId]);
+    if (check.rows.length === 0) return res.status(404).json({ message: "Job not found." });
+
+    await pool.query(\`DELETE FROM jobs WHERE id = $1\`, [jobId]);
+    res.status(200).json({ message: "Job deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+```
+
+---
+
+### 3. 🌐 Job Routes (`routes/jobRoutes.js`)
+
+```js
+import express from "express";
+import { createJob, getAllJobs, getJobById, updateJob, deleteJob } from "../controllers/jobController.js";
+import { verifyToken, checkCompanyRole } from "../middleware/authMiddleware.js";
+
+const router = express.Router();
+
+router.get("/", getAllJobs);
+router.get("/:id", getJobById);
+router.post("/", verifyToken, checkCompanyRole, createJob);
+router.put("/:id", verifyToken, checkCompanyRole, updateJob);
+router.delete("/:id", verifyToken, checkCompanyRole, deleteJob);
+
+export default router;
+```
+
+---
+
+### 4. 🧩 Integrasi Routes (`index.js`)
+
+```js
+import jobRoutes from "./routes/jobRoutes.js";
+app.use("/api/jobs", jobRoutes);
+```
+
+---
+
+## 🧪 Cara Menggunakan API
+
+### 🔸 Register sebagai Company
+
+```http
+POST /api/users/register
+{
+  "name": "PT JobNest",
+  "email": "hr@jobnest.com",
+  "password": "123456",
+  "role": "company"
+}
+```
+
+### 🔸 Login
+
+```http
+POST /api/users/login
+{
+  "email": "hr@jobnest.com",
+  "password": "123456"
+}
+```
+
+Tambahkan header:
+
+```
+Authorization: Bearer <token>
+```
+
+### 🔸 Endpoint CRUD Lowongan
+
+| Operasi            | Method | Endpoint            | Proteksi             |
+|--------------------|--------|---------------------|----------------------|
+| Buat Lowongan      | POST   | `/api/jobs`         | `verifyToken + role` |
+| Lihat Semua        | GET    | `/api/jobs`         | Publik               |
+| Lihat Detail       | GET    | `/api/jobs/:id`     | Publik               |
+| Update Lowongan    | PUT    | `/api/jobs/:id`     | `verifyToken + role` |
+| Hapus Lowongan     | DELETE | `/api/jobs/:id`     | `verifyToken + role` |
+
+---
+
+## ✅ Progress Saat Ini
+
+| Fitur                        | Status | Keterangan                                |
+|-----------------------------|--------|--------------------------------------------|
+| CRUD jobs                   | ✅     | Selesai semua operasi                     |
+| Proteksi role company       | ✅     | Melalui middleware `checkCompanyRole`     |
+| JWT + Register/Login        | ✅     | Termasuk payload `role`                   |
+| Integrasi routes            | ✅     | Ditambahkan di `index.js`                 |
+| Penyimpanan job ke DB       | ✅     | Menggunakan PostgreSQL                    |
+
+---
+
+## 🔜 Next Step
+
+- [ ] Filtering Jobs by query (`GET /api/jobs?location=...`)
+- [ ] Buat Tabel & API `favorites` (lowongan disimpan user)
+- [ ] Tambahkan Tabel `notifications` dan endpoint notifikasi
+- [ ] CRUD tabel `skills`, `portfolios`, dan `interests`
+- [ ] Fitur Inovatif:
+  - [ ] Simulasi Interview
+  - [ ] AI Career Recommender
+  - [ ] Forum Diskusi (posts, comments)
+
+
  
