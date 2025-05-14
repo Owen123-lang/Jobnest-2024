@@ -4,9 +4,9 @@ import pool from "../config/db.js";
 
 // === REGISTER ===
 export const registerUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const {email, password, role } = req.body;
 
-  if (!name || !email || !password) {
+  if (!email || !password) {
     return res.status(400).json({ message: "All fields are required." });
   }
 
@@ -23,8 +23,8 @@ export const registerUser = async (req, res) => {
     const userRole = role === 'company' ? 'company' : 'user';
 
     const newUser = await pool.query(
-      "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role",
-      [name, email, hashedPassword, userRole]
+      "INSERT INTO users (email, password, role, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id, email, role, created_at",
+      [email, hashedPassword, userRole]
     );
 
     res.status(201).json({
@@ -58,6 +58,9 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
+    // Update last_login timestamp
+    await pool.query("UPDATE users SET last_login = NOW() WHERE id = $1", [user.id]);
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -69,12 +72,26 @@ export const loginUser = async (req, res) => {
       token,
       user: {
         id: user.id,
-        name: user.name,
         email: user.email,
         role: user.role
       }
     });
 
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// === GET ALL USERS ===
+export const getAllUsers = async (req, res) => {
+  try {
+    const result = await pool.query("SELECT id, email, role, created_at, last_login FROM users ORDER BY id");
+
+    res.status(200).json({
+      message: "Users retrieved successfully.",
+      count: result.rows.length,
+      users: result.rows
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

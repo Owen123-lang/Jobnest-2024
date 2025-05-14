@@ -3,45 +3,59 @@ import pool from "../config/db.js";
 // CREATE - Tambah lowongan baru
 export const createJob = async (req, res) => {
   const { 
+    company_id,
     title, 
-    description, 
-    company, 
-    location, 
-    work_mode, 
     job_type, 
-    salary_range, 
-    qualifications, 
-    responsibilities 
+    work_mode, 
+    location, 
+    salary_min,
+    salary_max, 
+    description, 
+    deadline,
+    status = 'active' // Default status is active
   } = req.body;
 
   // Validasi input
-  if (!title || !description || !company) {
-    return res.status(400).json({ message: "Title, description, and company are required." });
+  if (!title || !description || !company_id) {
+    return res.status(400).json({ message: "Title, description, and company_id are required." });
   }
 
   try {
+    // Periksa apakah company ada (seharusnya memeriksa tabel users, bukan jobs)
+    const companyCheck = await pool.query(
+      `SELECT * FROM users WHERE id = $1 AND role = 'company'`, 
+      [company_id]
+    );
+    
+    if (companyCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Company not found." });
+    }
+
+    // Gunakan INSERT untuk membuat lowongan baru, bukan UPDATE
     const query = `
       INSERT INTO jobs (
-        title, description, company, location, work_mode, 
-        job_type, salary_range, qualifications, responsibilities, created_at
+        company_id, title, job_type, work_mode, location,
+        salary_min, salary_max, description, created_at, deadline, status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10)
       RETURNING *;
     `;
 
     const values = [
-      title, 
-      description, 
-      company, 
-      location || null, 
-      work_mode || null, 
-      job_type || null,
-      salary_range || null,
-      qualifications || null,
-      responsibilities || null
+      company_id,
+      title,
+      job_type || 'full_time',
+      work_mode || 'onsite',
+      location,
+      salary_min,
+      salary_max,
+      description,
+      deadline,
+      status
     ];
 
     const result = await pool.query(query, values);
+
     res.status(201).json({
       message: "Job created successfully",
       job: result.rows[0]
@@ -92,14 +106,14 @@ export const updateJob = async (req, res) => {
   const jobId = parseInt(req.params.id);
   const { 
     title, 
-    description, 
-    company, 
-    location, 
-    work_mode, 
     job_type, 
-    salary_range, 
-    qualifications, 
-    responsibilities 
+    work_mode, 
+    location, 
+    salary_min,
+    salary_max, 
+    description, 
+    deadline,
+    status
   } = req.body;
 
   if (!jobId || isNaN(jobId)) {
@@ -121,28 +135,28 @@ export const updateJob = async (req, res) => {
       UPDATE jobs 
       SET 
         title = $1, 
-        description = $2, 
-        company = $3, 
+        job_type = $2, 
+        work_mode = $3, 
         location = $4, 
-        work_mode = $5, 
-        job_type = $6, 
-        salary_range = $7, 
-        qualifications = $8, 
-        responsibilities = $9
+        salary_min = $5, 
+        salary_max = $6, 
+        description = $7,
+        deadline = $8,
+        status = $9
       WHERE id = $10
       RETURNING *;
     `;
 
     const values = [
       title || jobCheck.rows[0].title,
-      description || jobCheck.rows[0].description,
-      company || jobCheck.rows[0].company,
+      job_type || jobCheck.rows[0].job_type,
+      work_mode || jobCheck.rows[0].work_mode,
       location !== undefined ? location : jobCheck.rows[0].location,
-      work_mode !== undefined ? work_mode : jobCheck.rows[0].work_mode,
-      job_type !== undefined ? job_type : jobCheck.rows[0].job_type,
-      salary_range !== undefined ? salary_range : jobCheck.rows[0].salary_range,
-      qualifications !== undefined ? qualifications : jobCheck.rows[0].qualifications,
-      responsibilities !== undefined ? responsibilities : jobCheck.rows[0].responsibilities,
+      salary_min !== undefined ? salary_min : jobCheck.rows[0].salary_min,
+      salary_max !== undefined ? salary_max : jobCheck.rows[0].salary_max,
+      description || jobCheck.rows[0].description,
+      deadline || jobCheck.rows[0].deadline,
+      status || jobCheck.rows[0].status,
       jobId
     ];
 
