@@ -224,6 +224,16 @@ Authorization: Bearer <token>
 
 ---
 
+## 🔜 Next Step
+
+- [ ] Filtering Jobs by query (`GET /api/jobs?location=...`)
+- [ ] Buat Tabel & API `favorites` (lowongan disimpan user)
+- [ ] Tambahkan Tabel `notifications` dan endpoint notifikasi
+- [ ] CRUD tabel `skills`, `portfolios`, dan `interests`
+- [ ] Fitur Inovatif:
+  - [ ] Simulasi Interview
+  - [ ] AI Career Recommender
+  - [ ] Forum Diskusi (posts, comments)
 
 
  
