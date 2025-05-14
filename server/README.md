@@ -168,6 +168,9 @@ https://lucid.app/lucidspark/8ddf0509-e9f4-4216-ba67-1b5fc68fb627/edit?viewport_
 # 🧠 Backend Jobnest 2024 – 2025
 
 ## 🧪 Cara Menggunakan API
+```
+Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpFeMErI2vLJMxJlPfzz94jvLMfM/edit?usp=sharing
+```
 
 ### 🔸 Register sebagai Company
 
