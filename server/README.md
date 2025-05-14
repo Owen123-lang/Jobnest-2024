@@ -116,10 +116,9 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 4. users selesai dibuat 
 5. CRUD portofolios
 6. CRUD profiles
+7. CRUD skills
 
 ## Progres Belum Selesai :
-1. CRUD skills;
-
 ### 1. Filter & Pencarian Job
 - [ ] Endpoint: `GET /api/jobs?location=Jakarta&job_type=full-time`
 - [ ] Tambahkan logic filter di controller
@@ -135,8 +134,18 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 - [ ] Endpoint `GET /api/notifications/:userId`
 - [ ] Notifikasi: job baru, pelamar baru, lamaran diterima/ditolak
 
+### 4. Skills
+- [✅] Tabel `skills`, 
+- [✅] CRUD API untuk masing-masing
+- [✅] Terhubung ke user_id
+
+### 5. Portfolio
+- [ ] Tabel `portfolios`
+- [ ] CRUD API untuk masing-masing
+- [ ] Terhubung ke user_id
+
 ### 4. Skills, Portfolio, Interests
-- [ ] Tabel `skills`, `portfolios`, `interests`
+- [ ] Tabel `interests`
 - [ ] CRUD API untuk masing-masing
 - [ ] Terhubung ke user_id
 
