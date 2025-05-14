@@ -8,4 +8,6 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/", getAllUsers);
 
+// Profile routes
+
 export default router;

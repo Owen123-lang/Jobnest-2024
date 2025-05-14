@@ -23,7 +23,7 @@ export const createJob = async (req, res) => {
   try {
     // Periksa apakah company ada (seharusnya memeriksa tabel users, bukan jobs)
     const companyCheck = await pool.query(
-      `SELECT * FROM users WHERE id = $1 AND role = 'company'`, 
+      `SELECT * FROM companies WHERE id = $1`, 
       [company_id]
     );
     

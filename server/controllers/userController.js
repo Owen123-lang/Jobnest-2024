@@ -96,3 +96,38 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+// Get my profile (authenticated user)
+export const getMyProfile = async (req, res) => {
+  const userId = parseInt(req.params.userId);
+
+  if (!userId || isNaN(userId)) {
+    return res.status(400).json({ message: "Valid user ID is required." });
+  }
+
+  
+}
+
+
+// Delete profile
+export const deleteProfile = async (req, res) => {
+  const userId = req.user.id; // Get from JWT token
+  
+  try {
+    const result = await pool.query(
+      "DELETE FROM profiles WHERE user_id = $1 RETURNING *",
+      [userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+    
+    res.status(200).json({
+      message: "Profile deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error deleting profile:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

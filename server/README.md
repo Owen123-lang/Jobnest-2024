@@ -72,66 +72,6 @@ https://lucid.app/lucidspark/8ddf0509-e9f4-4216-ba67-1b5fc68fb627/edit?viewport_
 
 ## 🔹 Fitur Utama (Sisi Backend)
 
-### 1. Manajemen Lowongan Kerja & Magang
-- ✅ Tabel `jobs` disiapkan di PostgreSQL.
-- Kolom: `title`, `company`, `location`, `work_mode`, `job_type`, `description`, `salary_range`, dll.
-- ❌ Endpoint CRUD (`POST`, `PUT`, `DELETE`) belum tersedia.
-
-### 2. Perusahaan Mengelola Lowongan
-- ❌ Role `company` belum ditambahkan ke tabel `users`.
-- ❌ Endpoint khusus untuk perusahaan belum tersedia.
-
-### 3. CRUD API di Express.js
-- ✅ Sudah tersedia:
-  - `POST /api/users/register`
-  - `POST /api/users/login`
-  - `POST /api/upload-cv`
-  - `GET /api/applications/:userId`
-
-### 4. Dashboard Terpisah User & Perusahaan
-- ⚠️ Kolom `role` **sudah** di tabel `users`, belum ada logika otorisasi berdasarkan role.
-
-### 5. Apply Lamaran Secara Online
-- ✅ Endpoint: `POST /api/upload-cv`
-- File dikirim via `form-data`, diproses dengan `multer.memoryStorage`, dan diunggah ke **Cloudinary**.
-
-### 6. Tersimpan di Tabel Applications
-- ✅ Tabel `applications` menyimpan:
-  - `user_id` (FK)
-  - `job_id` (FK)
-  - `cv_url` (Cloudinary)
-  - `applied_at` (timestamp otomatis)
-
-### 7. Pencarian & Filter Lowongan
-- ⚠️ Struktur tabel mendukung (`location`, `job_type`, `work_mode`)
-- ❌ Endpoint pencarian & query belum tersedia
-
-### 8. Manajemen Profil & Portofolio
-- ❌ Belum dibuat tabel `skills`, `portfolios`, `interests`
-
-### 9. Penyimpanan CV
-- ✅ Disimpan di **Cloudinary** dengan tipe `raw`
-
-### 10. Notifikasi Status & Lowongan Baru
-- ❌ Belum ada tabel `notifications` atau logika backend
-
-### 11. Penyimpanan Lowongan Favorit
-- ❌ Tabel `favorites` dan endpoint `GET/POST` belum tersedia
-
----
-
-## 💡 Fitur Inovatif (Rencana Backend)
-
-| Fitur                  | Status | Rencana                                                                 |
-|------------------------|--------|-------------------------------------------------------------------------|
-| Forum Komunitas        | ❌     | Tabel `posts`, `comments`, `votes` → mirip Reddit forum                |
-| Simulasi Interview     | ❌     | Endpoint `GET` untuk pertanyaan dan `POST` jawaban                     |
-| AI Career Recommender  | ❌     | Akan pakai tabel `skills`, `interests`, `applications`, API ke GPT     |
-
----
-
-
-
 | Tabel         | Status | Penjelasan                                                                 |
 |---------------|--------|-----------------------------------------------------------------------------|
 | `users`       | ✅     | Data akun user: `id`, `name`, `email`, `password`, `created_at`            |
@@ -165,76 +105,46 @@ https://lucid.app/lucidspark/8ddf0509-e9f4-4216-ba67-1b5fc68fb627/edit?viewport_
 
 ---
 
-# 🧠 Backend Jobnest 2024 – 2025
-
 ## 🧪 Cara Menggunakan API
 ```
 Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpFeMErI2vLJMxJlPfzz94jvLMfM/edit?usp=sharing
 ```
+## Progres Selesai :
+1. Table Users berhasil dibuat beserta CRUDnya
+2. Table Jobs berhasil dibuat besart CRUDnya
+3. Company Admin berhasil dibuat juga
+4. users selesai dibuat 
+5. CRUD portofolios
 
-### 🔸 Register sebagai Company
+## Progres Belum Selesai :
+1. CRUD profiles
+2. CRUD skills;
 
-```http
-POST /api/users/register
-{
-  "name": "PT JobNest",
-  "email": "hr@jobnest.com",
-  "password": "123456",
-  "role": "company"
-}
-```
+### 1. Filter & Pencarian Job
+- [ ] Endpoint: `GET /api/jobs?location=Jakarta&job_type=full-time`
+- [ ] Tambahkan logic filter di controller
 
-### 🔸 Login
+### 2. Favorites
+- [ ] Tabel favorites (user_id, job_id)
+- [ ] Endpoint `POST /api/favorites`
+- [ ] Endpoint `GET /api/favorites/:userId`
+- [ ] Endpoint `DELETE /api/favorites/:id`
 
-```http
-POST /api/users/login
-{
-  "email": "hr@jobnest.com",
-  "password": "123456"
-}
-```
+### 3.  Notifikasi
+- [ ] Tabel `notifications` (user_id, message, status, created_at)
+- [ ] Endpoint `GET /api/notifications/:userId`
+- [ ] Notifikasi: job baru, pelamar baru, lamaran diterima/ditolak
 
-Tambahkan header:
+### 4. Skills, Portfolio, Interests
+- [ ] Tabel `skills`, `portfolios`, `interests`
+- [ ] CRUD API untuk masing-masing
+- [ ] Terhubung ke user_id
 
-```
-Authorization: Bearer <token>
-```
-
-### 🔸 Endpoint CRUD Lowongan
-
-| Operasi            | Method | Endpoint            | Proteksi             |
-|--------------------|--------|---------------------|----------------------|
-| Buat Lowongan      | POST   | `/api/jobs`         | `verifyToken + role` |
-| Lihat Semua        | GET    | `/api/jobs`         | Publik               |
-| Lihat Detail       | GET    | `/api/jobs/:id`     | Publik               |
-| Update Lowongan    | PUT    | `/api/jobs/:id`     | `verifyToken + role` |
-| Hapus Lowongan     | DELETE | `/api/jobs/:id`     | `verifyToken + role` |
-
----
-
-## ✅ Progress Saat Ini
-
-| Fitur                        | Status | Keterangan                                |
-|-----------------------------|--------|--------------------------------------------|
-| CRUD jobs                   | ✅     | Selesai semua operasi                     |
-| Proteksi role company       | ✅     | Melalui middleware `checkCompanyRole`     |
-| JWT + Register/Login        | ✅     | Termasuk payload `role`                   |
-| Integrasi routes            | ✅     | Ditambahkan di `index.js`                 |
-| Penyimpanan job ke DB       | ✅     | Menggunakan PostgreSQL                    |
-
----
-
-## 🔜 Next Step
-
-- [ ] Filtering Jobs by query (`GET /api/jobs?location=...`)
-- [ ] Buat Tabel & API `favorites` (lowongan disimpan user)
-- [ ] Tambahkan Tabel `notifications` dan endpoint notifikasi
-- [ ] CRUD tabel `skills`, `portfolios`, dan `interests`
-- [ ] Fitur Inovatif:
-  - [ ] Simulasi Interview
-  - [ ] AI Career Recommender
-  - [ ] Forum Diskusi (posts, comments)
+### 5. Fitur Inovatif (Bonus)
+- [ ] Forum komunitas (tabel `posts`, `comments`, `votes`)
+- [ ] Simulasi interview (GET pertanyaan, POST jawaban)
+- [ ] AI career recommender (butuh tabel interest, skill, applications)
 
 
- 
+
 

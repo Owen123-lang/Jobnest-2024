@@ -382,3 +382,49 @@ export const removeCompanyAdmin = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
+// Get all admins across all companies (for admin panel)
+export const getAllAdmins = async (req, res) => {
+  try {
+    // Optional pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    
+    // Get all company admins with company and user details
+    const result = await pool.query(`
+      SELECT 
+        ca.company_id, 
+        ca.user_id, 
+        ca.role_in_company,
+        c.name as company_name,
+        u.email as user_email
+      FROM company_admin ca
+      JOIN companies c ON ca.company_id = c.id
+      JOIN users u ON ca.user_id = u.id
+      ORDER BY c.name, ca.role_in_company
+      LIMIT $1 OFFSET $2
+    `, [limit, offset]);
+    
+    // Get total count for pagination
+    const countResult = await pool.query(`
+      SELECT COUNT(*) FROM company_admin
+    `);
+    
+    const totalCount = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    res.status(200).json({
+      count: result.rows.length,
+      totalCount,
+      currentPage: page,
+      totalPages,
+      admins: result.rows
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
