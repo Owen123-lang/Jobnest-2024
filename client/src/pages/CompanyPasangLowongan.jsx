@@ -8,16 +8,16 @@ export default function CompanyPasangLowongan() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">Pasang Lowongan Kerja</h1>
         
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="bg-white shadow rounded-lg overflow-hidden" >
           <div className="p-6">
             <form>
               {/* Job Details Section */}
               <div className="mb-8">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Detail Lowongan</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-4" >Detail Lowongan</h2>
                 
                 <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                   <div className="sm:col-span-4">
-                    <label htmlFor="jobTitle" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="jobTitle" className="block text-sm font-medium text-gray-700 text-left">
                       Judul Pekerjaan <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
@@ -33,7 +33,7 @@ export default function CompanyPasangLowongan() {
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label htmlFor="department" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="department" className="block text-sm font-medium text-gray-700 text-left">
                       Departemen
                     </label>
                     <div className="mt-1">
@@ -48,7 +48,7 @@ export default function CompanyPasangLowongan() {
                   </div>
 
                   <div className="sm:col-span-3">
-                    <label htmlFor="jobType" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="jobType" className="block text-sm font-medium text-gray-700 text-left">
                       Jenis Pekerjaan <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
@@ -69,7 +69,7 @@ export default function CompanyPasangLowongan() {
                   </div>
 
                   <div className="sm:col-span-3">
-                    <label htmlFor="location" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="location" className="block text-sm font-medium text-gray-700 text-left">
                       Lokasi <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
@@ -85,7 +85,7 @@ export default function CompanyPasangLowongan() {
                   </div>
 
                   <div className="sm:col-span-3">
-                    <label htmlFor="salaryMin" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="salaryMin" className="block text-sm font-medium text-gray-700 text-left">
                       Gaji Minimum
                     </label>
                     <div className="mt-1">
@@ -100,7 +100,7 @@ export default function CompanyPasangLowongan() {
                   </div>
 
                   <div className="sm:col-span-3">
-                    <label htmlFor="salaryMax" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="salaryMax" className="block text-sm font-medium text-gray-700 text-left">
                       Gaji Maximum
                     </label>
                     <div className="mt-1">
@@ -122,7 +122,7 @@ export default function CompanyPasangLowongan() {
                 
                 <div className="space-y-6">
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 text-left">
                       Deskripsi Pekerjaan <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
@@ -138,7 +138,7 @@ export default function CompanyPasangLowongan() {
                   </div>
 
                   <div>
-                    <label htmlFor="requirements" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="requirements" className="block text-sm font-medium text-gray-700 text-left">
                       Persyaratan <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
@@ -154,7 +154,7 @@ export default function CompanyPasangLowongan() {
                   </div>
 
                   <div>
-                    <label htmlFor="benefits" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="benefits" className="block text-sm font-medium text-gray-700 text-left">
                       Benefit
                     </label>
                     <div className="mt-1">

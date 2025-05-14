@@ -70,7 +70,7 @@ export default function CompanyHomePage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-200 text-left">
                 {recentApplicants.map((applicant) => (
                   <tr key={applicant.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

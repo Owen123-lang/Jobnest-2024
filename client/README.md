@@ -2,29 +2,44 @@
 
 ## Landing page
 
-<a href="https://ibb.co/tMH3KNMH"><img src="https://i.ibb.co/tMH3KNMH/landingpage.png" alt="landingpage" border="0"></a>
+![picture 6](https://i.imgur.com/srcJXXb.png)  
 
-## Register choice
+## Login/Register
+Login Choice
+![picture 10](https://i.imgur.com/wgTIZRJ.png)  
 
-<a href="https://ibb.co/yBBfMf9D"><img src="https://i.ibb.co/yBBfMf9D/register-as.png" alt="register-as" border="0"></a>
+Login Company
+![picture 11](https://i.imgur.com/KsvG8hB.png)  
+
+Login User
+![picture 12](https://i.imgur.com/6KhHU2P.png)  
+
+Register Choice
+![picture 8](https://i.imgur.com/ezbaaef.png) 
+
+Register Company
+![picture 14](https://i.imgur.com/zFkuMRv.png)  
+
+Register User
+![picture 13](https://i.imgur.com/OD5QA9w.png)  
 
 
-## Login choice
 
-<a href="https://ibb.co/1Y0k4hbd"><img src="https://i.ibb.co/1Y0k4hbd/loginas.png" alt="loginas" border="0"></a>
+## Company
+Dashboard
+![picture 0](https://i.imgur.com/f5zjHvj.png)  
+Daftar Lowongan
+![picture 1](https://i.imgur.com/3JkhQN6.png)
+Detail Lowongan
+![picture 2](https://i.imgur.com/ukONN6j.png)
+Pasang Lowongan
+![picture 3](https://i.imgur.com/hRdxKTi.png) 
+Notifikasi
+![picture 4](https://i.imgur.com/4K9mXAl.png)  
+Profil
+![picture 5](https://i.imgur.com/2U8AO2a.png)  
 
-##Login company
 
-<a href="https://ibb.co/pBKSmSnv"><img src="https://i.ibb.co/pBKSmSnv/log-in-company.png" alt="log-in-company" border="0"></a>
 
-##Login User
 
-<a href="https://ibb.co/mFg3K5Zf"><img src="https://i.ibb.co/mFg3K5Zf/loginuser.png" alt="loginuser" border="0"></a>
 
-## Register companu
-
-<a href="https://ibb.co/BKN4qYqP"><img src="https://i.ibb.co/BKN4qYqP/register-company.png" alt="register-company" border="0"></a>
-
-## Register User
-
-<a href="https://ibb.co/n9PFPzX"><img src="https://i.ibb.co/n9PFPzX/registeruser.png" alt="registeruser" border="0"></a>

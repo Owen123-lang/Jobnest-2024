@@ -53,7 +53,7 @@ export default function CompanyNotifikasi() {
 
         <div className="bg-white shadow rounded-lg overflow-hidden">
           {notifications.length > 0 ? (
-            <ul className="divide-y divide-gray-200">
+            <ul className="divide-y divide-gray-200 text-left">
               {notifications.map((notification) => (
                 <li 
                   key={notification.id}

@@ -43,7 +43,7 @@ export default function CompanyProfil() {
           </div>
           
           {/* Company Information */}
-          <div className="px-6 py-5 border-b border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="px-6 py-5 border-b border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
             <div>
               <h3 className="text-sm font-medium text-gray-500">Industry</h3>
               <p className="mt-1 text-sm text-gray-900">{company.industry}</p>
@@ -67,13 +67,13 @@ export default function CompanyProfil() {
           </div>
           
           {/* About Section */}
-          <div className="px-6 py-5 border-b border-gray-200">
+          <div className="px-6 py-5 border-b border-gray-200 text-left">
             <h3 className="text-lg font-medium text-gray-900 mb-3">About</h3>
             <p className="text-sm text-gray-600">{company.about}</p>
           </div>
           
           {/* Vision & Mission */}
-          <div className="px-6 py-5">
+          <div className="px-6 py-5 text-left">
             <div className="mb-5">
               <h3 className="text-lg font-medium text-gray-900 mb-3">Vision</h3>
               <p className="text-sm text-gray-600">{company.vision}</p>

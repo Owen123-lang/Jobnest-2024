@@ -45,7 +45,7 @@ export default function CompanyDetailLowongan() {
         </div>
 
         <div className="mt-6 bg-white shadow overflow-hidden rounded-lg">
-          <div className="px-6 py-5 border-b border-gray-200">
+          <div className="px-6 py-5 border-b border-gray-200 text-left">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500">Department</p>
@@ -74,22 +74,22 @@ export default function CompanyDetailLowongan() {
             </div>
           </div>
 
-          <div className="px-6 py-5 border-b border-gray-200">
+          <div className="px-6 py-5 border-b border-gray-200 text-left">
             <h2 className="text-lg font-medium text-gray-900">Job Description</h2>
             <p className="mt-2 text-sm text-gray-600">{jobDetails.description}</p>
           </div>
 
-          <div className="px-6 py-5 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Responsibilities</h2>
-            <ul className="mt-2 list-disc list-inside text-sm text-gray-600">
+          <div className="px-6 py-5 border-b border-gray-200 text-left">
+            <h2 className="text-lg font-medium text-gray-900 ">Responsibilities</h2>
+            <ul className="mt-2 list-disc list-inside text-sm text-gray-600 text-left">
               {jobDetails.responsibilities.map((item, index) => (
                 <li key={index}>{item}</li>
               ))}
             </ul>
           </div>
 
-          <div className="px-6 py-5">
-            <h2 className="text-lg font-medium text-gray-900">Requirements</h2>
+          <div className="px-6 py-5 text-left">
+            <h2 className="text-lg font-medium text-gray-900 ">Requirements</h2>
             <ul className="mt-2 list-disc list-inside text-sm text-gray-600">
               {jobDetails.requirements.map((item, index) => (
                 <li key={index}>{item}</li>
