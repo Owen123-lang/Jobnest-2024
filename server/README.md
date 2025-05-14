@@ -115,10 +115,10 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 3. Company Admin berhasil dibuat juga
 4. users selesai dibuat 
 5. CRUD portofolios
+6. CRUD profiles
 
 ## Progres Belum Selesai :
-1. CRUD profiles
-2. CRUD skills;
+1. CRUD skills;
 
 ### 1. Filter & Pencarian Job
 - [ ] Endpoint: `GET /api/jobs?location=Jakarta&job_type=full-time`
