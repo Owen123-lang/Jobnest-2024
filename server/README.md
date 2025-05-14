@@ -370,16 +370,32 @@ Authorization: Bearer <token>
 
 ---
 
-## 🔜 Next Step
+##  Fitur Selanjutnya (Belum Selesai)
 
-- [ ] Filtering Jobs by query (`GET /api/jobs?location=...`)
-- [ ] Buat Tabel & API `favorites` (lowongan disimpan user)
-- [ ] Tambahkan Tabel `notifications` dan endpoint notifikasi
-- [ ] CRUD tabel `skills`, `portfolios`, dan `interests`
-- [ ] Fitur Inovatif:
-  - [ ] Simulasi Interview
-  - [ ] AI Career Recommender
-  - [ ] Forum Diskusi (posts, comments)
+### 1. Filter & Pencarian Job
+- [ ] Endpoint: `GET /api/jobs?location=Jakarta&job_type=full-time`
+- [ ] Tambahkan logic filter di controller
+
+### 2. Favorites
+- [ ] Tabel favorites (user_id, job_id)
+- [ ] Endpoint `POST /api/favorites`
+- [ ] Endpoint `GET /api/favorites/:userId`
+- [ ] Endpoint `DELETE /api/favorites/:id`
+
+### 3.  Notifikasi
+- [ ] Tabel `notifications` (user_id, message, status, created_at)
+- [ ] Endpoint `GET /api/notifications/:userId`
+- [ ] Notifikasi: job baru, pelamar baru, lamaran diterima/ditolak
+
+### 4. Skills, Portfolio, Interests
+- [ ] Tabel `skills`, `portfolios`, `interests`
+- [ ] CRUD API untuk masing-masing
+- [ ] Terhubung ke user_id
+
+### 5. Fitur Inovatif (Bonus)
+- [ ] Forum komunitas (tabel `posts`, `comments`, `votes`)
+- [ ] Simulasi interview (GET pertanyaan, POST jawaban)
+- [ ] AI career recommender (butuh tabel interest, skill, applications)
 
 
  
