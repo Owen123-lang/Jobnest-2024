@@ -1,12 +1,23 @@
-# React + Vite
+# Progress FrontEnd
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Landing page
+<a href="https://ibb.co/tMH3KNMH"><img src="https://i.ibb.co/tMH3KNMH/landingpage.png" alt="landingpage" border="0"></a>
 
-Currently, two official plugins are available:
+## Register choice
+<a href="https://ibb.co/yBBfMf9D"><img src="https://i.ibb.co/yBBfMf9D/register-as.png" alt="register-as" border="0"></a>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Expanding the ESLint configuration
+## Login choice
+<a href="https://ibb.co/1Y0k4hbd"><img src="https://i.ibb.co/1Y0k4hbd/loginas.png" alt="loginas" border="0"></a>
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+##Login company
+<a href="https://ibb.co/pBKSmSnv"><img src="https://i.ibb.co/pBKSmSnv/log-in-company.png" alt="log-in-company" border="0"></a>
+
+##Login User
+<a href="https://ibb.co/mFg3K5Zf"><img src="https://i.ibb.co/mFg3K5Zf/loginuser.png" alt="loginuser" border="0"></a>
+
+## Register companu
+<a href="https://ibb.co/BKN4qYqP"><img src="https://i.ibb.co/BKN4qYqP/register-company.png" alt="register-company" border="0"></a>
+
+## Register User
+<a href="https://ibb.co/n9PFPzX"><img src="https://i.ibb.co/n9PFPzX/registeruser.png" alt="registeruser" border="0"></a>
