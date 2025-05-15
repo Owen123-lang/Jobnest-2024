@@ -13,6 +13,9 @@ import CompanyHomePage from './pages/CompanyHomePage';
 import CompanyNotifikasi from './pages/CompanyNotifikasi';
 import CompanyPasangLowongan from './pages/CompanyPasangLowongan';
 import CompanyProfil from './pages/CompanyProfil';
+import UserJobDetails from './pages/UserJobDetails';
+import UserNotifikasi from './pages/UserNotifikasi';
+import UserFavorit from './pages/UserFavorit';
 import './App.css';
 
 function App() {
@@ -37,6 +40,12 @@ function App() {
       <Route path="/company/post-job" element={<CompanyPasangLowongan />} />
       <Route path="/company/notifikasi" element={<CompanyNotifikasi />} />
       <Route path="/company/profil" element={<CompanyProfil />} />
+
+      {/* User Routes */}
+      <Route path="/user/job-details/:id" element={<UserJobDetails />} />
+      <Route path="/user/notifikasi" element={<UserNotifikasi />} />
+      <Route path="/user/favorites" element={<UserFavorit />} />
+
     </Routes>
   );
 }
