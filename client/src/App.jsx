@@ -17,6 +17,10 @@ import UserJobDetails from './pages/UserJobDetails';
 import UserNotifikasi from './pages/UserNotifikasi';
 import UserFavorit from './pages/UserFavorit';
 import './App.css';
+import UserPencarianLowongan from './pages/UserPencarianLowongan'; 
+import JobDetails from './pages/JobDetails'; 
+import UserProfile from './pages/UserProfile';
+import UserLamaran from './pages/UserLamaran';
 
 function App() {
   return (
@@ -31,6 +35,9 @@ function App() {
       <Route path="/register" element={<RoleSelector type="register" />} />
       <Route path="/register/user" element={<RegisterUser />} />
       <Route path="/register/company" element={<RegisterCompany />} />
+      <Route path="/jobs/:id" element={<JobDetails />} /> {/* Route untuk detail pekerjaan */}
+      
+      
       
       {/* Company Routes */}
       <Route path="/company/dashboard" element={<CompanyDashboard />} />
@@ -45,6 +52,10 @@ function App() {
       <Route path="/user/job-details/:id" element={<UserJobDetails />} />
       <Route path="/user/notifikasi" element={<UserNotifikasi />} />
       <Route path="/user/favorites" element={<UserFavorit />} />
+      <Route path="/user/profile" element={<UserProfile />} />
+      <Route path="/user/lamaran" element={<UserLamaran />} />
+      <Route path="/jobs" element={<UserPencarianLowongan/>} /> {/* Route untuk BrowseJobs */}
+      
 
     </Routes>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; // Tambahkan import Link
 
 function Footer() {
   return (
