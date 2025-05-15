@@ -8,6 +8,7 @@ import companyRoutes from "../routes/companyRoutes.js";
 import profileRoutes from "../routes/profileRoutes.js";
 import skillRoutes from "../routes/skillRoutes.js";
 import notificationRoutes from "../routes/notificationRoutes.js";
+import interestRoutes from "../routes/interestRoutes.js";
 
 dotenv.config();
 
@@ -61,6 +62,9 @@ app.use("/api/skill", skillRoutes);
 
 // Route untuk notification
 app.use("/api/notification", notificationRoutes);
+
+// Route untuk interest
+app.use("/api/interest", interestRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

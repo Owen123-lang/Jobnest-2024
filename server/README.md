@@ -118,6 +118,7 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 6. CRUD profiles
 7. CRUD skills
 8. CRUD notifications
+9. CRUD interest
 
 
 ## Progres Belum Selesai :
@@ -145,9 +146,9 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 - [ ] Terhubung ke user_id
 
 ### 4. Portfolio
-- [ ] Tabel `interests`
-- [ ] CRUD API untuk masing-masing
-- [ ] Terhubung ke user_id
+- [✅] Tabel `interests`
+- [✅] CRUD API untuk masing-masing
+- [✅] Terhubung ke user_id
 
 ### 5. Fitur Inovatif (Bonus)
 - [ ] Forum komunitas (tabel `posts`, `comments`, `votes`)
@@ -160,5 +161,4 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 ### To Do List
 1. CRUD applicatoins
 2. FIX portofolio3
-3. CRUD interest
 4. CRUD favorites
