@@ -78,9 +78,9 @@ https://lucid.app/lucidspark/8ddf0509-e9f4-4216-ba67-1b5fc68fb627/edit?viewport_
 | `jobs`        | ✅     | Lowongan kerja: `title`, `company`, `location`, `job_type`, `description`, dll |
 | `applications`| ✅     | Relasi `user` ↔ `job` + `cv_url` dari Cloudinary                           |
 | `favorites`   | ❌     | Relasi `user` ↔ `job` untuk fitur simpan lowongan                           |
-| `skills`      | ❌     | Menyimpan daftar keahlian user (untuk AI)                                  |
+| `skills`      | ✅     | Menyimpan daftar keahlian user (untuk AI)                                  |
 | `portfolios`  | ❌     | Proyek atau pengalaman kerja user                                          |
-| `notifications`| ❌    | Notifikasi seperti: “Lamaran Anda diterima”                                |
+| `notifications`| ✅    | Notifikasi seperti: “Lamaran Anda diterima”                                |
 | `interests`   | ❌     | Bidang minat user untuk AI recommender                                     |
 
 ---
@@ -97,8 +97,8 @@ https://lucid.app/lucidspark/8ddf0509-e9f4-4216-ba67-1b5fc68fb627/edit?viewport_
 | Rate Limiter Upload                    | ✅     | 3 upload CV / 10 menit per IP (`uploadLimiter`)                       |
 | Struktur tabel `jobs`                 | ✅     | Sudah lengkap, siap untuk CRUD                                        |
 | Struktur tabel `users`                | ✅     | Tersedia field `name`, `email`, `password`, `created_at`             |
-| Tambah field `role`                   | ❌     | Belum ditambahkan ke tabel `users`                                    |
-| CRUD jobs                              | ❌     | Belum tersedia untuk admin/perusahaan                                 |
+| Tambah field `role`                   | ✅     | Belum ditambahkan ke tabel `users`                                    |
+| CRUD jobs                              | ✅     | Belum tersedia untuk admin/perusahaan                                 |
 | Pencarian & Filter                     | ⚠️     | Kolom siap, query belum dibuat                                        |
 | Tabel `favorites`, `skills`, dsb       | ❌     | Belum dibuat                                                           |
 | Fitur Inovatif                         | ❌     | Belum dikembangkan                                                    |
@@ -117,6 +117,8 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 5. CRUD portofolios
 6. CRUD profiles
 7. CRUD skills
+8. CRUD notifications
+
 
 ## Progres Belum Selesai :
 ### 1. Filter & Pencarian Job
@@ -130,21 +132,19 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 - [ ] Endpoint `DELETE /api/favorites/:id`
 
 ### 3.  Notifikasi
-- [ ] Tabel `notifications` (user_id, message, status, created_at)
-- [ ] Endpoint `GET /api/notifications/:userId`
-- [ ] Notifikasi: job baru, pelamar baru, lamaran diterima/ditolak
+- [✅] Tabel `notifications` (id, user_id, message, is_read, sent_at)
 
 ### 4. Skills
 - [✅] Tabel `skills`, 
 - [✅] CRUD API untuk masing-masing
 - [✅] Terhubung ke user_id
-
+ 
 ### 5. Portfolio
 - [ ] Tabel `portfolios`
 - [ ] CRUD API untuk masing-masing
 - [ ] Terhubung ke user_id
 
-### 4. Skills, Portfolio, Interests
+### 4. Portfolio
 - [ ] Tabel `interests`
 - [ ] CRUD API untuk masing-masing
 - [ ] Terhubung ke user_id
@@ -156,4 +156,9 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 
 
 
-
+## Catatan : 
+### To Do List
+1. CRUD applicatoins
+2. FIX portofolio3
+3. CRUD interest
+4. CRUD favorites
