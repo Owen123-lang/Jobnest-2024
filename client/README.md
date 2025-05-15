@@ -40,8 +40,14 @@ Profil
 ![picture 5](https://i.imgur.com/2U8AO2a.png)  
 
 ## User
+Favorit
+![Screenshot 2025-05-15 195326](https://hackmd.io/_uploads/Sk8HUvm-gl.png)
 
+Detail Job
+![image](https://hackmd.io/_uploads/rJaDwwm-gg.png)
 
+Notifikasi
+![Screenshot 2025-05-15 200916](https://hackmd.io/_uploads/HJ1jDPmZll.png)
 
 
 
