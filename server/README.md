@@ -119,6 +119,7 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 7. CRUD skills
 8. CRUD notifications
 9. CRUD interest
+10. CRUD favorites
 
 
 ## Progres Belum Selesai :
@@ -127,10 +128,9 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 - [ ] Tambahkan logic filter di controller
 
 ### 2. Favorites
-- [ ] Tabel favorites (user_id, job_id)
-- [ ] Endpoint `POST /api/favorites`
-- [ ] Endpoint `GET /api/favorites/:userId`
-- [ ] Endpoint `DELETE /api/favorites/:id`
+- [✅] Endpoint `POST /api/favorites`
+- [✅] Endpoint `GET /api/favorites/:userId`
+- [✅] Endpoint `DELETE /api/favorites/:id`
 
 ### 3.  Notifikasi
 - [✅] Tabel `notifications` (id, user_id, message, is_read, sent_at)
@@ -161,4 +161,3 @@ Dokumentasi lengkap : https://docs.google.com/spreadsheets/d/1zw6ej-z0sdqa7OxRpF
 ### To Do List
 1. CRUD applicatoins
 2. FIX portofolio3
-4. CRUD favorites
