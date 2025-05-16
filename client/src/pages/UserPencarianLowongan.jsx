@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Navbar from '../components/Navbar';
 
 const UserPencarianLowongan = () => {
   const [search, setSearch] = useState('');
@@ -44,25 +45,7 @@ const UserPencarianLowongan = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-blue-600">Jobnest</h1>
-          <nav className="space-x-4">
-            <a href="/about" className="text-gray-700 hover:text-blue-600">
-              Tentang Kami
-            </a>
-            <a href="/jobs" className="text-gray-700 hover:text-blue-600">
-              Lowongan Pekerjaan
-            </a>
-            <a href="/testimonials" className="text-gray-700 hover:text-blue-600">
-              Testimoni
-            </a>
-            <a href="/login" className="text-blue-600 hover:text-blue-800">
-              Daftar/Masuk
-            </a>
-          </nav>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold mb-6">Cari Lowongan Pekerjaan</h1>
@@ -98,7 +81,7 @@ const UserPencarianLowongan = () => {
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 text-left">
           {filteredJobs.map((job) => (
             <div key={job.id} className="p-4 bg-white shadow rounded-md flex justify-between items-center">
               <div>

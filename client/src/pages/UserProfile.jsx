@@ -13,12 +13,12 @@ const UserProfile = () => {
             <span>A</span>
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Azka Nabihan</h1>
-            <p className="text-gray-600">Azka@example.com</p>
+            <h1 className="text-2xl font-bold ">Azka Nabihan</h1>
+            <p className="text-gray-600 text-left">Azka@example.com</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 text-left">
           <div>
             <h2 className="text-lg font-semibold mb-2">Profil</h2>
             <p>Azka Nabihan</p>
@@ -41,8 +41,8 @@ const UserProfile = () => {
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold mb-4">Lowongan Favorit</h2>
-          <div className="p-4 bg-white shadow rounded-lg">
+          <h2 className="text-lg font-semibold mb-4 text-left">Lowongan Favorit</h2>
+          <div className="p-4 bg-white shadow rounded-lg text-left">
             <h3 className="text-xl font-bold">Software Developer</h3>
             <p className="text-gray-600">ABC, Jakarta, Indonesia</p>
           </div>

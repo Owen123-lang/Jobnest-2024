@@ -54,7 +54,7 @@ function App() {
       <Route path="/user/favorites" element={<UserFavorit />} />
       <Route path="/user/profile" element={<UserProfile />} />
       <Route path="/user/lamaran" element={<UserLamaran />} />
-      <Route path="/jobs" element={<UserPencarianLowongan/>} /> {/* Route untuk BrowseJobs */}
+      <Route path="/user/search" element={<UserPencarianLowongan/>} /> {/* Route untuk BrowseJobs */}
       
 
     </Routes>

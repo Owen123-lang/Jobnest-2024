@@ -42,7 +42,7 @@ const UserLamaran = () => {
         <h1 className="text-3xl font-bold mb-6">Profil</h1>
         <form className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+            <label className="block text-sm font-medium text-gray-700 text-left">Nama Lengkap</label>
             <input
               type="text"
               placeholder="Nama Orang"
@@ -50,7 +50,7 @@ const UserLamaran = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-gray-700 text-left">Email</label>
             <input
               type="email"
               placeholder="nama@example.com"
@@ -58,7 +58,7 @@ const UserLamaran = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+            <label className="block text-sm font-medium text-gray-700 text-left">Nomor Telepon</label>
             <input
               type="text"
               placeholder="Nomor Telepon"
@@ -66,7 +66,7 @@ const UserLamaran = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Tentang Saya</label>
+            <label className="block text-sm font-medium text-gray-700 text-left">Tentang Saya</label>
             <textarea
               placeholder="Tulis Tentang Saya Disini"
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"

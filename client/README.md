@@ -41,16 +41,21 @@ Profil
 
 ## User
 Favorit
-![Screenshot 2025-05-15 195326](https://hackmd.io/_uploads/Sk8HUvm-gl.png)
+![picture 15](https://i.imgur.com/EtREODd.png)  
 
 Detail Job
-![image](https://hackmd.io/_uploads/rJaDwwm-gg.png)
+![picture 16](https://i.imgur.com/yCqZmwY.png)  
 
 Notifikasi
-![Screenshot 2025-05-15 200916](https://hackmd.io/_uploads/HJ1jDPmZll.png)
+![picture 17](https://i.imgur.com/rmjCL92.png)  
 
+Search
+![picture 18](https://i.imgur.com/aEmMfR1.png)  
 
+Lamaran Saya
+![picture 19](https://i.imgur.com/oacYPJB.png)  
 
-
+Profil
+![picture 20](https://i.imgur.com/ZSmnVPC.png)  
 
 
