@@ -40,7 +40,7 @@ function Navbar() {
               <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-colors">
                 About Us
               </Link>
-              <Link to="/jobs" className="text-gray-700 hover:text-blue-600 transition-colors">
+              <Link to="/user/search" className="text-gray-700 hover:text-blue-600 transition-colors">
                 Job Listings
               </Link>
               <Link to="/testimonials" className="text-gray-700 hover:text-blue-600 transition-colors">

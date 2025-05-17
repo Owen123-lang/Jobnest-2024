@@ -18,9 +18,9 @@ function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Tautan Cepat</h3>
             <ul className="space-y-2">
-              <li><a href="/tentang" className="text-gray-300 hover:text-white transition-colors">Tentang Kami</a></li>
-              <li><a href="/lowongan" className="text-gray-300 hover:text-white transition-colors">Lowongan Pekerjaan</a></li>
-              <li><a href="/testimoni" className="text-gray-300 hover:text-white transition-colors">Testimoni</a></li>
+              <li><a href="/about" className="text-gray-300 hover:text-white transition-colors">Tentang Kami</a></li>
+              <li><a href="/user/search" className="text-gray-300 hover:text-white transition-colors">Lowongan Pekerjaan</a></li>
+              <li><a href="/testimonials" className="text-gray-300 hover:text-white transition-colors">Testimoni</a></li>
             </ul>
           </div>
 

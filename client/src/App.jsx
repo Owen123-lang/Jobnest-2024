@@ -21,6 +21,8 @@ import UserPencarianLowongan from './pages/UserPencarianLowongan';
 import JobDetails from './pages/JobDetails'; 
 import UserProfile from './pages/UserProfile';
 import UserLamaran from './pages/UserLamaran';
+import AboutUs from './pages/AboutUs';
+import Testimonials from './pages/Testimonials';
 
 function App() {
   return (
@@ -36,6 +38,9 @@ function App() {
       <Route path="/register/user" element={<RegisterUser />} />
       <Route path="/register/company" element={<RegisterCompany />} />
       <Route path="/jobs/:id" element={<JobDetails />} /> {/* Route untuk detail pekerjaan */}
+      <Route path="/about" element={<AboutUs />} /> 
+      <Route path="/testimonials" element={<Testimonials />} /> 
+      
       
       
       
