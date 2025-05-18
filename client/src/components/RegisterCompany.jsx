@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { auth, companyAPI, uploadAPI } from '../utils/api';
+import { auth } from '../utils/api';
 
 function RegisterCompany() {
   const [formData, setFormData] = useState({
@@ -11,7 +10,7 @@ function RegisterCompany() {
     email: '',
     password: '',
     description: '',
-    size: '', // Changed from company_size to size
+    size: '',
     location: '',
     founded: '',
     vision: '',
@@ -44,20 +43,24 @@ function RegisterCompany() {
     setSuccess(false);
 
     try {
-      console.log("Starting company registration process...");
-      
       // Step 1: Register user with company role and get token
       const userResponse = await auth.register({
         email: formData.email,
         password: formData.password,
-        role: 'company' // Specify company role
+        role: 'company',
+        companyName: formData.companyName,
+        website: formData.website,
+        industry: formData.industry,
+        description: formData.description,
+        size: formData.size,
+        founded: formData.founded,
+        vision: formData.vision,
+        mission: formData.mission
       });
       
       // Get user ID and token from response
       const userId = userResponse.data.user.id;
       const token = userResponse.data.token;
-      
-      console.log(`User registration successful. User ID: ${userId}`);
       
       if (token) {
         // Save auth data in local storage
@@ -65,88 +68,15 @@ function RegisterCompany() {
         localStorage.setItem('user', JSON.stringify(userResponse.data.user));
       }
       
-      // Step 2: Create company profile with FormData to handle file upload
-      try {
-        console.log("Creating company profile...");
-        
-        // Buat FormData baru untuk pengiriman file dan data
-        const companyData = new FormData();
-        
-        // Tambahkan semua field ke FormData dengan memetakan nama yang benar
-        companyData.append('user_id', userId);
-        companyData.append('name', formData.companyName || ''); // Map companyName ke name
-        companyData.append('website', formData.website || '');
-        companyData.append('industry', formData.industry || '');
-        companyData.append('description', formData.description || 'No description provided');
-        companyData.append('size', formData.size || 'Unknown');
-        companyData.append('location', formData.location || 'Not specified');
-        companyData.append('founded', formData.founded ? parseInt(formData.founded) : '');
-        companyData.append('vision', formData.vision || 'No vision provided');
-        companyData.append('mission', formData.mission || 'No mission provided');
-        
-        // Tambahkan file logo jika tersedia
-        if (formData.logo) {
-          companyData.append('logo', formData.logo);
-        }
-
-        console.log("Company data being sent:", Object.fromEntries(companyData.entries()));
-
-        // Gunakan axios langsung dengan header yang benar
-        const response = await axios.post(`${import.meta.REACT_APP_API_URL || 'http://localhost:5000'}/api/companies`, 
-          companyData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              'Authorization': `Bearer ${token}`
-            }
-          }
-        );
-        
-        console.log("Company profile created successfully:", response.data);
-        
-        setSuccess(true);
-        
-        // Set a small timeout to let user see success message
-        setTimeout(() => {
-          // After successful registration, force refresh company profile data in local storage
-          if (response.data && response.data.company) {
-            const user = auth.getCurrentUser();
-            if (user) {
-              user.company_id = response.data.company.id;
-              localStorage.setItem('user', JSON.stringify(user));
-            }
-          }
-          
-          navigate('/company/dashboard');
-        }, 1500);
-      } catch (companyError) {
-        console.error("Failed to create company profile:", companyError);
-        
-        // More detailed error analysis
-        let errorMessage = "Failed to create company profile. ";
-        
-        if (companyError.response) {
-          console.error("Response data:", companyError.response.data);
-          
-          if (companyError.response.data.message) {
-            errorMessage += companyError.response.data.message;
-          } else if (companyError.response.data.error) {
-            errorMessage += companyError.response.data.error;
-          }
-        } else if (companyError.message) {
-          errorMessage += companyError.message;
-        }
-        
-        setError(errorMessage);
-        
-        // User is still registered, so redirect to profile page to complete setup
-        setTimeout(() => {
-          navigate('/company/profil');
-        }, 3000);
-      }
-    } catch (err) {
-      console.error("Registration failed:", err);
+      setSuccess(true);
       
+      // Set a small timeout to let user see success message
+      setTimeout(() => {
+        // Redirect to company profile page for completing profile setup
+        navigate('/company/profil');
+      }, 1500);
+      
+    } catch (err) {
       let errorMessage = 'Registration failed. ';
       
       if (err.response?.data?.message) {
@@ -181,11 +111,11 @@ function RegisterCompany() {
         
         {success && (
           <div className="mt-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-            Registration successful! Redirecting...
+            Registration successful! Redirecting to set up your company profile...
           </div>
         )}
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}  encType="multipart/form-data" >
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-5">
             <div className="mb-4">
               <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -200,110 +130,6 @@ function RegisterCompany() {
                   className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
                   placeholder="Enter your company name"
                   value={formData.companyName}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-            
-            <div className="mb-4">
-              <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-2">
-                Website
-              </label>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
-                <input
-                  id="website"
-                  name="website"
-                  type="url"
-                  className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
-                  placeholder="https://yourcompany.com"
-                  value={formData.website}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-            
-            <div className="mb-4">
-              <label htmlFor="industry" className="block text-sm font-medium text-gray-700 mb-2">
-                Industry
-              </label>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
-                <select
-                  id="industry"
-                  name="industry"
-                  required
-                  className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
-                  value={formData.industry}
-                  onChange={handleChange}
-                >
-                  <option value="">Select industry</option>
-                  <option value="technology">Technology</option>
-                  <option value="finance">Finance</option>
-                  <option value="healthcare">Healthcare</option>
-                  <option value="education">Education</option>
-                  <option value="retail">Retail</option>
-                  <option value="manufacturing">Manufacturing</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
-            
-            {/* Company Size Field */}
-            <div className="mb-4">
-              <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
-                Company Size
-              </label>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
-                <select
-                  id="size"
-                  name="size"
-                  className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
-                  value={formData.size}
-                  onChange={handleChange}
-                >
-                  <option value="">Select company size</option>
-                  <option value="1-10">1–10 employees</option>
-                  <option value="11-50">11–50 employees</option>
-                  <option value="51-200">51–200 employees</option>
-                  <option value="201-500">201–500 employees</option>
-                  <option value="501-1000">501–1000 employees</option>
-                  <option value="1001+">1001+ employees</option>
-                </select>
-              </div>
-            </div>
-            
-            {/* Location Field */}
-            <div className="mb-4">
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
-                Location
-              </label>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
-                <input
-                  id="location"
-                  name="location"
-                  type="text"
-                  className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
-                  placeholder="City, Country"
-                  value={formData.location}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-            
-            {/* Founded Year Field */}
-            <div className="mb-4">
-              <label htmlFor="founded" className="block text-sm font-medium text-gray-700 mb-2">
-                Founded Year
-              </label>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
-                <input
-                  id="founded"
-                  name="founded"
-                  type="number"
-                  min="1900"
-                  max={new Date().getFullYear()}
-                  className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
-                  placeholder="e.g. 2010"
-                  value={formData.founded}
                   onChange={handleChange}
                 />
               </div>
@@ -348,8 +174,50 @@ function RegisterCompany() {
             </div>
             
             <div className="mb-4">
+              <label htmlFor="industry" className="block text-sm font-medium text-gray-700 mb-2">
+                Industry
+              </label>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
+                <select
+                  id="industry"
+                  name="industry"
+                  required
+                  className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
+                  value={formData.industry}
+                  onChange={handleChange}
+                >
+                  <option value="">Select industry</option>
+                  <option value="technology">Technology</option>
+                  <option value="finance">Finance</option>
+                  <option value="healthcare">Healthcare</option>
+                  <option value="education">Education</option>
+                  <option value="retail">Retail</option>
+                  <option value="manufacturing">Manufacturing</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-2">
+                Website (Optional)
+              </label>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
+                <input
+                  id="website"
+                  name="website"
+                  type="url"
+                  className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
+                  placeholder="https://yourcompany.com"
+                  value={formData.website}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            
+            <div className="mb-4">
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Company Description
+                Company Description (Optional)
               </label>
               <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
                 <textarea
@@ -364,10 +232,49 @@ function RegisterCompany() {
               </div>
             </div>
             
-            {/* Vision Field */}
+            <div className="mb-4">
+              <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
+                Company Size (Optional)
+              </label>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
+                <select
+                  id="size"
+                  name="size"
+                  className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
+                  value={formData.size}
+                  onChange={handleChange}
+                >
+                  <option value="">Select company size</option>
+                  <option value="1-10 employees">1-10 employees</option>
+                  <option value="11-50 employees">11-50 employees</option>
+                  <option value="51-200 employees">51-200 employees</option>
+                  <option value="201-500 employees">201-500 employees</option>
+                  <option value="501-1000 employees">501-1000 employees</option>
+                  <option value="1001+ employees">1001+ employees</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <label htmlFor="founded" className="block text-sm font-medium text-gray-700 mb-2">
+                Founded Year (Optional)
+              </label>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
+                <input
+                  id="founded"
+                  name="founded"
+                  type="text"
+                  className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
+                  placeholder="e.g., 2010"
+                  value={formData.founded}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            
             <div className="mb-4">
               <label htmlFor="vision" className="block text-sm font-medium text-gray-700 mb-2">
-                Company Vision
+                Company Vision (Optional)
               </label>
               <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
                 <textarea
@@ -375,17 +282,16 @@ function RegisterCompany() {
                   name="vision"
                   rows="3"
                   className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
-                  placeholder="What is your company's vision?"
+                  placeholder="Your company's vision for the future"
                   value={formData.vision}
                   onChange={handleChange}
                 ></textarea>
               </div>
             </div>
             
-            {/* Mission Field */}
             <div className="mb-4">
               <label htmlFor="mission" className="block text-sm font-medium text-gray-700 mb-2">
-                Company Mission
+                Company Mission (Optional)
               </label>
               <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
                 <textarea
@@ -393,26 +299,10 @@ function RegisterCompany() {
                   name="mission"
                   rows="3"
                   className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
-                  placeholder="What is your company's mission?"
+                  placeholder="Your company's mission statement"
                   value={formData.mission}
                   onChange={handleChange}
                 ></textarea>
-              </div>
-            </div>
-            
-            <div className="mb-4">
-              <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-2">
-                Company Logo
-              </label>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
-                <input
-                  id="logo"
-                  name="logo"
-                  type="file"
-                  accept="image/*"
-                  className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
-                  onChange={handleFileChange}
-                />
               </div>
             </div>
           </div>

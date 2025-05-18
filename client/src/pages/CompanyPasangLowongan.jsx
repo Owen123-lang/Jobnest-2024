@@ -56,8 +56,14 @@ export default function CompanyPasangLowongan() {
       const response = await companyAPI.getProfile();
       setCompanyProfile(response.data);
       
-      // If company profile is incomplete, redirect to profile page
-      if (!response.data.name || !response.data.industry || !response.data.location) {
+      // More specific validation for required company profile fields
+      if (!response.data || !response.data.id) {
+        setCompanyProfileError(true);
+        return;
+      }
+      
+      // Check for incomplete profile (missing essential fields)
+      if (!response.data.name || !response.data.industry) {
         setCompanyProfileError(true);
       }
     } catch (err) {

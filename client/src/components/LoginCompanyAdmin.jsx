@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth, companyAPI } from '../utils/api';
+import { companyAdminAPI } from '../utils/api';
 
-function LoginCompany() {
+function LoginCompanyAdmin() {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -20,51 +20,40 @@ function LoginCompany() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Form validation
+    if (!formData.email || !formData.password) {
+      setError('Email and password are required');
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
     try {
-      const response = await auth.loginCompany(formData);
+      const response = await companyAdminAPI.login({
+        email: formData.email,
+        password: formData.password
+      });
       
-      // Check if the user has the company role
-      if (response.data.user.role !== 'company') {
-        setError('This account is not registered as a company. Please use the appropriate login page.');
-        setLoading(false);
-        return;
-      }
-      
-      // Store token and user info in localStorage
+      // Store token and user data in localStorage
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('user', JSON.stringify(response.data.admin));
       
-      // Check if company profile exists for this user
-      try {
-        const userId = response.data.user.id;
-        const companyResponse = await companyAPI.getCompanyByUserId(userId);
-        
-        // Update user data with company_id for future reference
-        if (companyResponse.data && companyResponse.data.id) {
-          const user = response.data.user;
-          user.company_id = companyResponse.data.id;
-          
-          // Update stored user data with company_id
-          localStorage.setItem('user', JSON.stringify(user));
-        }
-        
-        // If we got here, company profile exists, redirect to dashboard
-        navigate('/company/dashboard');
-      } catch (profileErr) {
-        // Check if error is 404 (profile doesn't exist)
-        if (profileErr.response && profileErr.response.status === 404) {
-          // Redirect to create profile page instead
-          navigate('/company/profil');
-        } else {
-          // For any other error, still redirect to dashboard
-          navigate('/company/dashboard');
-        }
-      }
+      // Redirect to company dashboard
+      navigate('/company/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      let errorMessage = 'Login failed. ';
+      
+      if (err.response?.data?.message) {
+        errorMessage += err.response.data.message;
+      } else if (err.message) {
+        errorMessage += err.message;
+      } else {
+        errorMessage += 'Please check your credentials and try again.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -74,18 +63,23 @@ function LoginCompany() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Log in as Company</h2>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">Company Admin Login</h2>
+          <p className="mt-2 text-lg text-blue-600">
+            Sign in to your company admin account
+          </p>
         </div>
+        
         {error && (
           <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
             {error}
           </div>
         )}
+        
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-5">
             <div className="mb-4">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Company Email
+                Email Address
               </label>
               <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
                 <input
@@ -95,16 +89,24 @@ function LoginCompany() {
                   autoComplete="email"
                   required
                   className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
-                  placeholder="Company email address"
+                  placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleChange}
                 />
               </div>
             </div>
+            
             <div className="mb-4">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <div className="text-sm">
+                  <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                    Forgot password?
+                  </Link>
+                </div>
+              </div>
               <div className="bg-white rounded-lg shadow-sm border border-gray-300 p-3">
                 <input
                   id="password"
@@ -113,7 +115,7 @@ function LoginCompany() {
                   autoComplete="current-password"
                   required
                   className="appearance-none block w-full border-0 p-0 text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none sm:text-sm"
-                  placeholder="Password"
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
                 />
@@ -124,20 +126,24 @@ function LoginCompany() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
           
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register/company" className="font-medium text-blue-600 hover:text-blue-500">
-                Register as Company
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm">
+              <Link to="/" className="font-medium text-blue-600 hover:text-blue-500">
+                Back to home
               </Link>
-            </p>
+            </div>
+            <div className="text-sm">
+              <Link to="/register/company-admin" className="font-medium text-blue-600 hover:text-blue-500">
+                Register as new company admin
+              </Link>
+            </div>
           </div>
         </form>
       </div>
@@ -145,4 +151,4 @@ function LoginCompany() {
   );
 }
 
-export default LoginCompany;
+export default LoginCompanyAdmin;

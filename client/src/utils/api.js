@@ -355,4 +355,69 @@ export const uploadAPI = {
   }
 };
 
+// Company Admin related API calls
+export const companyAdminAPI = {
+  // Register company admin
+  register: (adminData) => {
+    return axiosInstance.post('/company-admin/register', adminData);
+  },
+
+  // Login company admin
+  login: (credentials) => {
+    return axiosInstance.post('/company-admin/login', credentials);
+  },
+
+  // Create company profile as admin
+  createCompanyProfile: (profileData) => {
+    if (profileData instanceof FormData) {
+      // Use direct axios for FormData to handle file uploads
+      const token = localStorage.getItem('token');
+      return axios.post(`${API_URL}/company-admin/profile`, profileData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': token ? `Bearer ${token}` : undefined
+        },
+        timeout: 30000
+      });
+    }
+    // Regular JSON request
+    return axiosInstance.post('/company-admin/profile', profileData);
+  },
+
+  // Get company profile as admin
+  getCompanyProfile: () => {
+    return axiosInstance.get('/company-admin/profile');
+  },
+
+  // Update company profile as admin
+  updateCompanyProfile: (profileData) => {
+    if (profileData instanceof FormData) {
+      const token = localStorage.getItem('token');
+      return axios.put(`${API_URL}/company-admin/profile`, profileData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': token ? `Bearer ${token}` : undefined
+        },
+        timeout: 30000
+      });
+    }
+    return axiosInstance.put('/company-admin/profile', profileData);
+  },
+
+  // Get company staff members
+  getCompanyStaff: (companyId) => {
+    return axiosInstance.get(`/company-admin/${companyId}/staff`);
+  },
+
+  // Add staff member
+  addStaffMember: (companyId, userData) => {
+    return axiosInstance.post(`/company-admin/${companyId}/staff`, userData);
+  },
+
+  // Remove staff member
+  removeStaffMember: (companyId, userId) => {
+    return axiosInstance.delete(`/company-admin/${companyId}/staff/${userId}`);
+  }
+};
+
 export default axiosInstance;

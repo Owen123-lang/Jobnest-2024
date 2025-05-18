@@ -27,8 +27,13 @@ export const checkCompanyRole = (req, res, next) => {
 
 export const checkCompanyOwnerOrAdmin = async (req, res, next) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Authentication required. Please login." });
+    }
+    
     const userId = req.user.id;
-    const companyId = parseInt(req.params.id || req.body.company_id);
+    // Get company ID from either params, body, or query parameters
+    const companyId = parseInt(req.params.id || req.body.company_id || req.query.company_id);
     
     if (!companyId || isNaN(companyId)) {
       return res.status(400).json({ message: "Valid company ID is required." });
@@ -42,6 +47,7 @@ export const checkCompanyOwnerOrAdmin = async (req, res, next) => {
     
     if (companyCheck.rows.length > 0) {
       // User is the company owner, proceed
+      req.isCompanyOwner = true; // Flag for potential use in routes
       return next();
     }
     
@@ -58,10 +64,12 @@ export const checkCompanyOwnerOrAdmin = async (req, res, next) => {
     }
     
     // User is an admin for this company, proceed
+    req.isCompanyAdmin = true; // Flag for potential use in routes
+    req.adminRole = adminCheck.rows[0].role_in_company; // Store the admin role
     next();
   } catch (error) {
-    console.error("Error checking company permissions:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error in company owner/admin check middleware:", error);
+    res.status(500).json({ message: "Server error during authentication check." });
   }
 };
 

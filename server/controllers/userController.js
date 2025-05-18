@@ -7,7 +7,7 @@ export const registerUser = async (req, res) => {
   const {email, password, role, companyName, website, industry, description } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ message: "All fields are required." });
+    return res.status(400).json({ message: "Email and password are required." });
   }
 
   try {
@@ -35,15 +35,20 @@ export const registerUser = async (req, res) => {
       const user = newUser.rows[0];
       
       // If role is 'company', automatically create a company profile
+      let companyId = null;
       if (userRole === 'company') {
         // Use provided company information or set defaults
         const name = companyName || email.split('@')[0]; // Default name from email if not provided
         
-        await pool.query(
+        const companyResult = await pool.query(
           `INSERT INTO companies (user_id, name, website, industry, description) 
-           VALUES ($1, $2, $3, $4, $5)`,
+           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
           [user.id, name, website || null, industry || null, description || null]
         );
+        
+        if (companyResult.rows.length > 0) {
+          companyId = companyResult.rows[0].id;
+        }
       }
       
       // Commit transaction
@@ -51,25 +56,44 @@ export const registerUser = async (req, res) => {
       
       // Generate JWT token for immediate authentication
       const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
+        { 
+          id: user.id, 
+          email: user.email, 
+          role: user.role,
+          company_id: companyId // Include company_id if applicable
+        },
         process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+        { expiresIn: "24h" }
       );
-
-      res.status(201).json({
-        message: "User registered successfully.",
-        token, // Return token for immediate login
-        user: user
+      
+      // Return success response
+      return res.status(201).json({
+        message: "Registration successful",
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          company_id: companyId
+        }
       });
       
     } catch (error) {
-      // Rollback transaction on error
+      // Roll back the transaction if anything fails
       await pool.query('ROLLBACK');
-      throw error;
+      console.error("Transaction error during registration:", error);
+      return res.status(500).json({ 
+        message: "Error during registration process", 
+        error: error.message 
+      });
     }
 
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Registration error:", error);
+    return res.status(500).json({ 
+      message: "Server error during registration", 
+      error: error.message 
+    });
   }
 };
 

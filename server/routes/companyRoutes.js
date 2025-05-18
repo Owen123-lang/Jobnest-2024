@@ -13,7 +13,7 @@ import {
   getCompanyByUserId,
   getMyCompanyProfile
 } from "../controllers/companyController.js";
-import { verifyToken, checkCompanyRole } from "../middleware/authMiddleware.js";
+import { verifyToken, checkCompanyRole, checkCompanyOwnerOrAdmin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -40,24 +40,26 @@ router.get("/:id", getCompanyById);
 router.get("/:id/jobs", getCompanyJobs);
 
 // Create company route with upload middleware
-router.post("/", upload.single('logo'), createCompany);
+router.post("/", verifyToken, upload.single('logo'), createCompany);
 
 // Protected routes (authentication required)
 router.get("/user/:userId", verifyToken, getCompanyByUserId);
 router.get("/profile/me", verifyToken, checkCompanyRole, getMyCompanyProfile);
 
-router.put("/:id", verifyToken, upload.single('logo'), updateCompany);
-router.delete("/:id", verifyToken, deleteCompany);
+// Routes that require company owner or admin permissions
+router.put("/:id", verifyToken, checkCompanyOwnerOrAdmin, upload.single('logo'), updateCompany);
+router.delete("/:id", verifyToken, checkCompanyOwnerOrAdmin, deleteCompany);
 
-router.post("/admin", verifyToken, addCompanyAdmin);
-router.delete("/:companyId/admin/:adminId", verifyToken, removeCompanyAdmin);
+// Company admin management routes
+router.post("/admin", verifyToken, checkCompanyOwnerOrAdmin, addCompanyAdmin);
+router.delete("/:companyId/admin/:adminId", verifyToken, checkCompanyOwnerOrAdmin, removeCompanyAdmin);
 
-// Admin of company
-router.get("/admins/all", getAllAdmins); // For super admin use
+// Admin of company - for super admin only
+router.get("/admins/all", verifyToken, getAllAdmins);
 
-// Add a new route for notifications
-router.get('/api/notifications', (req, res) => {
-  res.status(200).json([]); // Return an empty array
+// Notifications route
+router.get('/notifications', verifyToken, checkCompanyRole, (req, res) => {
+  res.status(200).json([]); // Return an empty array for now
 });
 
 export default router;

@@ -5,6 +5,7 @@ import userRoutes from "../routes/userRoutes.js";
 import applicationRoutes from "../routes/applicationRoutes.js";
 import jobRoutes from "../routes/jobRoutes.js";
 import companyRoutes from "../routes/companyRoutes.js";
+import companyAdminRoutes from "../routes/companyAdminRoutes.js";
 import profileRoutes from "../routes/profileRoutes.js";
 import skillRoutes from "../routes/skillRoutes.js";
 import notificationRoutes from "../routes/notificationRoutes.js";
@@ -54,6 +55,9 @@ app.use("/api", uploadRoutes);
 
 // Route untuk company
 app.use("/api/companies", companyRoutes);
+
+// Route untuk company admin
+app.use("/api/company-admin", companyAdminRoutes);
 
 // Route untuk profile
 app.use("/api/profile", profileRoutes);
