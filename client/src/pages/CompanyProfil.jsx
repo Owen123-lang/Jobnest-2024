@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { auth, companyAPI, uploadAPI } from "../utils/api";
+import { auth, companyAPI } from "../utils/api";
 
 export default function CompanyProfil() {
   const navigate = useNavigate();
@@ -9,9 +9,9 @@ export default function CompanyProfil() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
   
   // Form data for editing
   const [formData, setFormData] = useState({
@@ -67,9 +67,17 @@ export default function CompanyProfil() {
         mission: response.data.mission || ""
       });
       
+      setIsCreating(false);
     } catch (err) {
       console.error("Error fetching company profile:", err);
-      setError("Failed to load company profile. Please try again.");
+      
+      // If no company profile found, show creation form
+      if (err.response && err.response.data && err.response.data.missingCompanyProfile) {
+        setIsCreating(true);
+        setIsEditing(true);
+      } else {
+        setError("Failed to load company profile. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -103,49 +111,80 @@ export default function CompanyProfil() {
     setSaveError(null);
     
     try {
-      let logoUrl = company?.logo || null;
+      // Prepare data for API; include only non-empty values
+      const profileData = {};
       
-      // Upload logo if a new one is selected
-      if (selectedLogo) {
-        setUploadingLogo(true);
-        try {
-          const uploadResponse = await uploadAPI.uploadFile(selectedLogo, 'company-logo');
-          logoUrl = uploadResponse.data.secure_url;
-        } catch (uploadErr) {
-          console.error("Error uploading logo:", uploadErr);
-          setSaveError("Failed to upload logo, but profile will still be updated.");
-        } finally {
-          setUploadingLogo(false);
+      // Only include non-empty values
+      if (formData.name) profileData.name = formData.name;
+      if (formData.industry) profileData.industry = formData.industry;
+      if (formData.size) profileData.size = formData.size;
+      if (formData.location) profileData.location = formData.location;
+      if (formData.founded) profileData.founded = formData.founded;
+      if (formData.website) profileData.website = formData.website;
+      if (formData.about) profileData.description = formData.about;
+      if (formData.vision) profileData.vision = formData.vision;
+      if (formData.mission) profileData.mission = formData.mission;
+      
+      // Add logo only if a new file was selected
+      if (selectedLogo) profileData.logo = selectedLogo;
+
+      // Debug: Log profileData before sending
+      console.log("Sending company profile data:", profileData);
+      
+      let response;
+      
+      if (isCreating) {
+        // User ID is required for company creation
+        profileData.user_id = auth.getCurrentUser()?.id;
+        
+        // Validate required fields are present
+        if (!profileData.user_id || !profileData.name) {
+          throw new Error("User ID and company name are required fields");
         }
+        
+        response = await companyAPI.createCompany(profileData);
+        console.log("Create company response:", response);
+        
+        // Update user data in localStorage with company_id
+        if (response.data && response.data.company && response.data.company.id) {
+          const user = auth.getCurrentUser();
+          if (user) {
+            user.company_id = response.data.company.id;
+            localStorage.setItem('user', JSON.stringify(user));
+            console.log('Updated user data with company ID:', response.data.company.id);
+          }
+        }
+      } else {
+        response = await companyAPI.updateCompany(company.id, profileData);
+        console.log("Update company response:", response);
       }
-      
-      // Update company profile
-      const updatedProfile = {
-        name: formData.name,
-        industry: formData.industry,
-        size: formData.size,
-        location: formData.location,
-        founded: formData.founded,
-        website: formData.website,
-        description: formData.about,
-        vision: formData.vision,
-        mission: formData.mission,
-        logo: logoUrl
-      };
-      
-      await companyAPI.updateCompany(company.id, updatedProfile);
       
       // Refresh company data
       await fetchCompanyProfile();
       
-      // Show success message and exit edit mode
       setSaveSuccess(true);
       setIsEditing(false);
       setTimeout(() => setSaveSuccess(false), 3000);
       
+      // Redirect to dashboard if we just created a new company
+      if (isCreating) {
+        setTimeout(() => navigate('/company/dashboard'), 1500);
+      }
     } catch (err) {
       console.error("Error updating company profile:", err);
-      setSaveError("Failed to update profile. Please try again.");
+      
+      // Detailed error logging for debugging
+      if (err.response) {
+        console.error("Response status:", err.response.status);
+        console.error("Response data:", err.response.data);
+        console.error("Response headers:", err.response.headers);
+      } else if (err.request) {
+        console.error("No response received:", err.request);
+      } else {
+        console.error("Error message:", err.message);
+      }
+      
+      setSaveError(`Failed to ${isCreating ? 'create' : 'update'} profile. ${err.response?.data?.message || err.message || "Please try again."}`);
     }
   };
 
@@ -154,7 +193,7 @@ export default function CompanyProfil() {
       <div className="font-sans">
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Profil Perusahaan</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Company Profile</h1>
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             <span className="ml-3 text-gray-700">Loading profile...</span>
@@ -164,12 +203,12 @@ export default function CompanyProfil() {
     );
   }
 
-  if (error) {
+  if (error && !isEditing) {
     return (
       <div className="font-sans">
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Profil Perusahaan</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Company Profile</h1>
           <div className="mt-6 bg-red-50 border-l-4 border-red-500 p-4">
             <div className="text-red-700">
               <p>{error}</p>
@@ -178,6 +217,15 @@ export default function CompanyProfil() {
                 className="mt-2 bg-red-100 hover:bg-red-200 text-red-800 py-1 px-3 rounded"
               >
                 Try Again
+              </button>
+              <button
+                onClick={() => {
+                  setIsEditing(true);
+                  setIsCreating(true);
+                }}
+                className="mt-2 ml-4 bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded"
+              >
+                Create Profile
               </button>
             </div>
           </div>
@@ -189,13 +237,13 @@ export default function CompanyProfil() {
   const renderProfileView = () => (
     <>
       <div className="md:flex md:items-start md:justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Profil Perusahaan</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Company Profile</h1>
         <div className="mt-4 md:mt-0">
           <button 
             onClick={() => setIsEditing(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
           >
-            Edit Profil
+            Edit Profile
           </button>
         </div>
       </div>
@@ -290,29 +338,40 @@ export default function CompanyProfil() {
   const renderProfileForm = () => (
     <>
       <div className="md:flex md:items-start md:justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Edit Company Profile</h1>
-        <div className="mt-4 md:mt-0">
-          <button 
-            onClick={() => setIsEditing(false)}
-            className="mr-3 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md"
-          >
-            Cancel
-          </button>
-          <button 
-            type="submit"
-            form="company-profile-form"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50"
-            disabled={uploadingLogo}
-          >
-            {uploadingLogo ? 'Uploading...' : 'Save Changes'}
-          </button>
-        </div>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          {isCreating ? 'Create Company Profile' : 'Edit Company Profile'}
+        </h1>
+        {!isCreating && (
+          <div className="mt-4 md:mt-0">
+            <button 
+              onClick={() => setIsEditing(false)}
+              className="mr-3 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              form="company-profile-form"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50"
+            >
+              Save Changes
+            </button>
+          </div>
+        )}
       </div>
       
       {saveError && (
         <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4">
           <div className="text-red-700">
             {saveError}
+          </div>
+        </div>
+      )}
+      
+      {isCreating && (
+        <div className="mb-4 bg-blue-50 border-l-4 border-blue-500 p-4">
+          <div className="text-blue-700">
+            Please complete your company profile before posting jobs.
           </div>
         </div>
       )}
@@ -525,6 +584,19 @@ export default function CompanyProfil() {
             </div>
           </div>
         </div>
+
+        {/* Submit button (only for create mode) */}
+        {isCreating && (
+          <div className="px-6 py-4 bg-gray-50 text-right">
+            <button 
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md disabled:opacity-50"
+              disabled={!formData.name || !formData.industry || !formData.location}
+            >
+              Create Profile
+            </button>
+          </div>
+        )}
       </form>
     </>
   );

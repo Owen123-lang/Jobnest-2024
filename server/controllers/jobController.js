@@ -16,22 +16,20 @@ export const createJob = async (req, res) => {
   } = req.body;
 
   // Validasi input
-  if (!title || !description || !company_id) {
-    return res.status(400).json({ message: "Title, description, and company_id are required." });
+  if (!title || !description) {
+    return res.status(400).json({ message: "Title and description are required." });
+  }
+
+  if (!company_id) {
+    return res.status(400).json({ 
+      message: "Company ID is required. Please complete your company profile first.",
+      missingCompanyProfile: true
+    });
   }
 
   try {
-    // Periksa apakah company ada (seharusnya memeriksa tabel users, bukan jobs)
-    const companyCheck = await pool.query(
-      `SELECT * FROM companies WHERE id = $1`, 
-      [company_id]
-    );
-    
-    if (companyCheck.rows.length === 0) {
-      return res.status(404).json({ message: "Company not found." });
-    }
-
-    // Gunakan INSERT untuk membuat lowongan baru, bukan UPDATE
+    // Company existence is already verified by the getCompanyIdForUser middleware
+    // Insert the new job
     const query = `
       INSERT INTO jobs (
         company_id, title, job_type, work_mode, location,
@@ -61,6 +59,7 @@ export const createJob = async (req, res) => {
       job: result.rows[0]
     });
   } catch (error) {
+    console.error("Error creating job:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -68,11 +67,46 @@ export const createJob = async (req, res) => {
 // READ ALL - Ambil semua lowongan
 export const getAllJobs = async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT * FROM jobs ORDER BY created_at DESC`
-    );
+    // Add support for filtering
+    const { location, job_type, work_mode, search } = req.query;
+    let query = `SELECT j.*, c.name as company_name 
+                FROM jobs j
+                LEFT JOIN companies c ON j.company_id = c.id
+                WHERE 1=1`;
+    
+    const params = [];
+    let paramCount = 1;
+    
+    if (location) {
+      query += ` AND j.location ILIKE $${paramCount}`;
+      params.push(`%${location}%`);
+      paramCount++;
+    }
+    
+    if (job_type) {
+      query += ` AND j.job_type = $${paramCount}`;
+      params.push(job_type);
+      paramCount++;
+    }
+    
+    if (work_mode) {
+      query += ` AND j.work_mode = $${paramCount}`;
+      params.push(work_mode);
+      paramCount++;
+    }
+    
+    if (search) {
+      query += ` AND (j.title ILIKE $${paramCount} OR j.description ILIKE $${paramCount} OR c.name ILIKE $${paramCount})`;
+      params.push(`%${search}%`);
+      paramCount++;
+    }
+    
+    query += ` ORDER BY j.created_at DESC`;
+    
+    const result = await pool.query(query, params);
     res.status(200).json(result.rows);
   } catch (error) {
+    console.error("Error getting jobs:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -87,7 +121,10 @@ export const getJobById = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT * FROM jobs WHERE id = $1`,
+      `SELECT j.*, c.name as company_name
+       FROM jobs j
+       LEFT JOIN companies c ON j.company_id = c.id
+       WHERE j.id = $1`,
       [jobId]
     );
 
@@ -97,6 +134,7 @@ export const getJobById = async (req, res) => {
 
     res.status(200).json(result.rows[0]);
   } catch (error) {
+    console.error("Error getting job details:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -129,6 +167,22 @@ export const updateJob = async (req, res) => {
 
     if (jobCheck.rows.length === 0) {
       return res.status(404).json({ message: "Job not found." });
+    }
+
+    // Verify job belongs to the user's company
+    if (req.user && req.user.role === 'company') {
+      const companyCheck = await pool.query(
+        `SELECT c.id FROM companies c
+         WHERE c.user_id = $1`,
+        [req.user.id]
+      );
+      
+      if (companyCheck.rows.length > 0) {
+        const companyId = companyCheck.rows[0].id;
+        if (jobCheck.rows[0].company_id !== companyId) {
+          return res.status(403).json({ message: "You are not authorized to update this job." });
+        }
+      }
     }
 
     const query = `
@@ -167,6 +221,7 @@ export const updateJob = async (req, res) => {
       job: result.rows[0]
     });
   } catch (error) {
+    console.error("Error updating job:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -190,6 +245,22 @@ export const deleteJob = async (req, res) => {
       return res.status(404).json({ message: "Job not found." });
     }
 
+    // Verify job belongs to the user's company
+    if (req.user && req.user.role === 'company') {
+      const companyCheck = await pool.query(
+        `SELECT c.id FROM companies c
+         WHERE c.user_id = $1`,
+        [req.user.id]
+      );
+      
+      if (companyCheck.rows.length > 0) {
+        const companyId = companyCheck.rows[0].id;
+        if (jobCheck.rows[0].company_id !== companyId) {
+          return res.status(403).json({ message: "You are not authorized to delete this job." });
+        }
+      }
+    }
+
     // Hapus job
     await pool.query(
       `DELETE FROM jobs WHERE id = $1`,
@@ -200,6 +271,7 @@ export const deleteJob = async (req, res) => {
       message: "Job deleted successfully"
     });
   } catch (error) {
+    console.error("Error deleting job:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

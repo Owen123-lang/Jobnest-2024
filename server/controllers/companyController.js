@@ -1,4 +1,42 @@
 import pool from '../config/db.js';
+import cloudinary from '../config/cloudinary.js';
+import streamifier from 'streamifier';
+
+/**
+ * Upload company logo to Cloudinary using base64 encoding
+ * @param {Object} file - Multer file object with buffer property
+ * @returns {Promise<string>} - URL of the uploaded image
+ * @throws {Error} If upload fails or file format is invalid
+ */
+export const uploadCompanyLogo = async (file) => {
+  // Validate file exists
+  if (!file || !file.buffer) {
+    throw new Error('No file provided');
+  }
+
+  // Validate file type (only accept jpeg and png)
+  if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png') {
+    throw new Error('Only JPEG and PNG formats are accepted');
+  }
+  
+  try {
+    // Convert buffer to base64 data URL
+    const base64Data = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    
+    // Upload to Cloudinary using base64 data
+    const uploadResult = await cloudinary.uploader.upload(base64Data, {
+      resource_type: 'image',
+      folder: 'company_logos',
+      format: file.mimetype.split('/')[1] // Extract format (jpeg/png) from mimetype
+    });
+    
+    // Return the secure URL
+    return uploadResult.secure_url;
+  } catch (error) {
+    console.error('Error uploading company logo:', error);
+    throw new Error(`Logo upload failed: ${error.message}`);
+  }
+};
 
 // Get all companies (READ)
 export const getAllCompanies = async (req, res) => {
@@ -63,73 +101,111 @@ export const getAllCompanies = async (req, res) => {
 };
 
 // Update company (UPDATE)
-// In companyController.js
 export const updateCompany = async (req, res) => {
-  const companyId = parseInt(req.params.id);
-  const { name, website, industry, description, logo } = req.body;
-//   const userId = req.user.id;  // From the JWT token
-  
-  if (!companyId || isNaN(companyId)) {
-    return res.status(400).json({ message: "Valid company ID is required." });
-  }
   
   try {
-    // Check if company exists
-    const companyCheck = await pool.query(
-      `SELECT * FROM companies WHERE id = $1`,
-      [companyId]
-    );
+    // Debug logs
+    console.debug('updateCompany req.body:', req.body);
+    console.debug('updateCompany req.file:', req.file);
+    console.debug('updateCompany companyId:', req.params.id);
+
+    const companyId = parseInt(req.params.id);
+    const { 
+      name, website, industry, size, location, 
+      founded, description, vision, mission 
+    } = req.body;
     
-    if (companyCheck.rows.length === 0) {
-      return res.status(404).json({ message: "Company not found." });
+    // Validate company ID
+    if (!companyId || isNaN(companyId)) {
+      return res.status(400).json({ message: "Valid company ID is required." });
     }
     
-    const company = companyCheck.rows[0];
+    // Validate required fields
+    if (name && typeof name !== 'string') {
+      return res.status(400).json({ message: "Company name must be a valid string." });
+    }
     
-    // // Check if user owns this company or is an admin
-    // if (company.user_id !== userId) {
-    //   // Check if user is an admin for this company
-    //   const isAdmin = await pool.query(
-    //     `SELECT * FROM company_admin WHERE company_id = $1 AND user_id = $2`,
-    //     [companyId, userId]
-    //   );
+    try {
+      // Check if company exists
+      const companyCheck = await pool.query(
+        `SELECT * FROM companies WHERE id = $1`,
+        [companyId]
+      );
       
-    //   if (isAdmin.rows.length === 0) {
-    //     return res.status(403).json({ message: "You don't have permission to update this company." });
-    //   }
-    // }
-    
-    // Update company details
+      if (companyCheck.rows.length === 0) {
+        return res.status(404).json({ message: "Company not found." });
+      }
+      
+      const company = companyCheck.rows[0];
+      
+      // Initialize logoUrl with existing logo as fallback
+      let logoUrl = company.logo;
+      let uploadErrorMsg = null;
+
+    // Upload new logo only if file and buffer are provided
+    if (req.file && req.file.buffer) {
+      try {
+        logoUrl = await uploadCompanyLogo(req.file);
+      } catch (err) {
+        console.error("Logo upload failed, using existing logo:", err);
+        uploadErrorMsg = err.message;
+      }
+    }
+
     const query = `
-      UPDATE companies 
-      SET 
+      UPDATE companies
+      SET
         name = COALESCE($1, name),
         website = COALESCE($2, website),
         industry = COALESCE($3, industry),
-        description = COALESCE($4, description),
-        logo = COALESCE($5, logo)
-      WHERE id = $6
+        "size" = COALESCE($4, "size"),
+        location = COALESCE($5, location),
+        founded = COALESCE($6, founded),
+        description = COALESCE($7, description),
+        vision = COALESCE($8, vision),
+        mission = COALESCE($9, mission),
+        logo = COALESCE($10, logo)
+      WHERE id = $11
       RETURNING *;
     `;
-    
     const values = [
       name || null,
       website || null,
       industry || null,
+      size || null,
+      location || null,
+      founded || null,
       description || null,
-      logo || null,
+      vision || null,
+      mission || null,
+      logoUrl,
       companyId
     ];
-    
+
+    console.log("Executing SQL update with values:", values);
     const result = await pool.query(query, values);
-    
-    res.status(200).json({
-      message: "Company updated successfully",
-      company: result.rows[0]
-    });
+
+    const responseMessage = uploadErrorMsg
+      ? `Company updated, but logo upload failed: ${uploadErrorMsg}`
+      : 'Company profile updated successfully';
+
+    res.status(200).json({ message: responseMessage, company: result.rows[0] });
   } catch (error) {
-    console.error("Error updating company:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error in SQL query:", error);
+    res.status(500).json({ 
+      message: "Server error during update", 
+      error: error.message,
+      details: error.response?.data || "No additional error details" 
+    });
+  }
+  } catch (error) {
+    console.error("Error updating company profile:", error);
+    console.error("Error details:", error.response?.data);
+    res.status(500).json({ 
+      message: "Server error", 
+      error: error.message,
+      details: error.response?.data || "No additional error details"
+    });
   }
 };
 
@@ -148,7 +224,10 @@ export const getCompanyById = async (req, res) => {
     );
     
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Company not found." });
+      return res.status(404).json({ 
+        message: "Company not found.",
+        missingCompanyProfile: true
+      });
     }
     
     // Remove sensitive information if needed
@@ -156,44 +235,155 @@ export const getCompanyById = async (req, res) => {
     
     res.status(200).json(company);
   } catch (error) {
+    console.error("Error retrieving company:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get company profile by user ID
+export const getCompanyByUserId = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId || req.user.id);
+    
+    if (!userId || isNaN(userId)) {
+      return res.status(400).json({ message: "Valid user ID is required." });
+    }
+    
+    const result = await pool.query(
+      `SELECT * FROM companies WHERE user_id = $1`,
+      [userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        message: "No company profile found for this user. Please create one.",
+        missingCompanyProfile: true
+      });
+    }
+    
+    // Remove sensitive information if needed
+    const company = result.rows[0];
+    
+    res.status(200).json(company);
+  } catch (error) {
+    console.error("Error retrieving company profile:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get company profile for current authenticated user
+export const getMyCompanyProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const result = await pool.query(
+      `SELECT * FROM companies WHERE user_id = $1`,
+      [userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        message: "No company profile found. Please create a company profile first.",
+        missingCompanyProfile: true
+      });
+    }
+    
+    const company = result.rows[0];
+    
+    res.status(200).json(company);
+  } catch (error) {
+    console.error("Error retrieving company profile:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 // Create new company (CREATE)
 export const createCompany = async (req, res) => {
-  const { user_id, name, website, industry, description, logo } = req.body;
+  // Log request untuk debugging
+  console.log("Request body:", req.body);
+  console.log("Request file:", req.file);
   
-  if (!user_id || !name) {
-    return res.status(400).json({ message: "User ID and company name are required." });
+  // Ekstrak user_id dari token atau body
+  const user_id = req.user?.id || req.body.user_id;
+  
+  // Ekstrak data dengan nilai default
+  const {
+    name = null, 
+    website = null, 
+    industry = null, 
+    description = "No description provided",
+    size = "Unknown", 
+    location = "Not specified", 
+    founded = null, 
+    vision = "No vision provided", 
+    mission = "No mission provided"
+  } = req.body;
+
+  // Validasi field penting
+  if (!user_id) {
+    return res.status(400).json({ message: "User ID is required." });
   }
-  
+
+  if (!name) {
+    return res.status(400).json({ message: "Company name is required." });
+  }
+
   try {
-    // Check if company already exists for this user
+    // Cek apakah perusahaan sudah terdaftar untuk user_id ini
     const existingCompany = await pool.query(
       `SELECT * FROM companies WHERE user_id = $1`,
       [user_id]
     );
-    
+
     if (existingCompany.rows.length > 0) {
       return res.status(400).json({ message: "User already has a company registered." });
     }
-    
-    // Create new company
+
+    // Process logo upload if provided
+    let logoUrl = null;
+    if (req.file) {
+      try {
+        logoUrl = await uploadCompanyLogo(req.file);
+      } catch (uploadError) {
+        console.error("Logo upload failed:", uploadError);
+        // Continue without logo if upload fails
+      }
+    }
+
     const query = `
-      INSERT INTO companies (user_id, name, website, industry, description, logo)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO companies (
+        user_id, name, website, industry, description,
+        "size", location, founded, vision, mission, logo
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *;
     `;
+
+    // Pastikan nilai default diberikan jika nilai null atau undefined
+    const values = [
+      user_id,
+      name || 'Unnamed Company',
+      website || null,
+      industry || null,
+      description || "No description provided",
+      size || "Unknown",
+      location || "Not specified",
+      founded || null,
+      vision || "No vision provided",
+      mission || "No mission provided",
+      logoUrl
+    ];
+
+    console.log("SQL query values:", values); // Log untuk debugging
     
-    const values = [user_id, name, website || null, industry || null, description || null, logo || null];
     const result = await pool.query(query, values);
-    
+
     res.status(201).json({
       message: "Company created successfully",
       company: result.rows[0]
     });
   } catch (error) {
+    console.error("Error creating company:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -379,10 +569,9 @@ export const removeCompanyAdmin = async (req, res) => {
       message: "Company admin removed successfully"
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status  (500).json({ message: "Server error", error: error.message });
   }
 };
-
 
 // Get all admins across all companies (for admin panel)
 export const getAllAdmins = async (req, res) => {

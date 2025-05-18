@@ -13,5 +13,9 @@ router.put("/read/", verifyToken, markNotificationRead);
 router.put("/read-all/", verifyToken, markAllNotificationsRead);
 router.delete("/delete/", verifyToken, deleteNotification);
 
+// Route untuk mengatasi masalah 404 di frontend
+router.get("/", (req, res) => {
+  res.status(200).json([]);  // Mengembalikan array kosong
+});
 
 export default router;

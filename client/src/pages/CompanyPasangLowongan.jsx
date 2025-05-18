@@ -11,6 +11,7 @@ export default function CompanyPasangLowongan() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [companyProfile, setCompanyProfile] = useState(null);
+  const [companyProfileError, setCompanyProfileError] = useState(false);
   const isEditMode = Boolean(id);
   
   // Form data
@@ -57,12 +58,17 @@ export default function CompanyPasangLowongan() {
       
       // If company profile is incomplete, redirect to profile page
       if (!response.data.name || !response.data.industry || !response.data.location) {
-        alert("Please complete your company profile before posting a job.");
-        navigate('/company/profil');
+        setCompanyProfileError(true);
       }
     } catch (err) {
       console.error("Error fetching company profile:", err);
-      setSubmitError("Failed to fetch company profile. Please try again.");
+      
+      // If company profile not found, show appropriate error
+      if (err.response && err.response.data && err.response.data.missingCompanyProfile) {
+        setCompanyProfileError(true);
+      } else {
+        setSubmitError("Failed to fetch company profile. Please try again.");
+      }
     }
   };
   
@@ -106,14 +112,27 @@ export default function CompanyPasangLowongan() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Check if company profile is complete
+    if (companyProfileError) {
+      alert("Please complete your company profile before posting a job.");
+      navigate('/company/profil');
+      return;
+    }
+    
     // Reset states
     setLoading(true);
     setSubmitSuccess(false);
     setSubmitError(null);
     
     try {
+      // Validate company profile
       if (!companyProfile?.id) {
         throw new Error("Company profile not found");
+      }
+      
+      // Validate required fields
+      if (!formData.title || !formData.job_type || !formData.work_mode || !formData.location || !formData.status || !formData.description || !formData.requirements) {
+        throw new Error("Please fill all required fields");
       }
       
       // Format job data for API
@@ -122,14 +141,17 @@ export default function CompanyPasangLowongan() {
         company_id: companyProfile.id,
         salary_min: formData.salary_min ? Number(formData.salary_min) : null,
         salary_max: formData.salary_max ? Number(formData.salary_max) : null,
-        created_by: auth.getCurrentUser().id
+        created_by: auth.getCurrentUser()?.id
       };
       
       // Create or update job based on mode
+      let response;
       if (isEditMode) {
-        await jobAPI.updateJob(id, jobData);
+        response = await jobAPI.updateJob(id, jobData);
+        console.log("Update job response:", response.data);
       } else {
-        await jobAPI.createJob(jobData);
+        response = await jobAPI.createJob(jobData);
+        console.log("Create job response:", response.data);
       }
       
       // Show success message and redirect after a delay
@@ -140,13 +162,38 @@ export default function CompanyPasangLowongan() {
       
     } catch (err) {
       console.error(`Error ${isEditMode ? 'updating' : 'creating'} job:`, err);
-      setSubmitError(err.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} job posting. Please try again.`);
+      
+      // Handle specific error cases
+      if (err.message === "Company profile not found") {
+        setSubmitError("Company profile not found. Please create a company profile first.");
+        setTimeout(() => {
+          navigate('/company/profil');
+        }, 2000);
+      } else if (err.response?.status === 404 && err.response?.data?.message?.includes("company")) {
+        setSubmitError("Company profile not found. Please create a company profile first.");
+        setTimeout(() => {
+          navigate('/company/profil');
+        }, 2000);
+      } else {
+        // General error
+        setSubmitError(
+          err.response?.data?.message || 
+          `Failed to ${isEditMode ? 'update' : 'create'} job posting. Please try again.`
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleSaveDraft = async () => {
+    // Check if company profile is complete
+    if (companyProfileError) {
+      alert("Please complete your company profile before saving a draft.");
+      navigate('/company/profil');
+      return;
+    }
+    
     // Validate required fields before saving
     if (!formData.title) {
       alert("Job title is required, even for drafts.");
@@ -157,6 +204,7 @@ export default function CompanyPasangLowongan() {
     setSubmitError(null);
     
     try {
+      // Validate company profile
       if (!companyProfile?.id) {
         throw new Error("Company profile not found");
       }
@@ -168,23 +216,36 @@ export default function CompanyPasangLowongan() {
         salary_min: formData.salary_min ? Number(formData.salary_min) : null,
         salary_max: formData.salary_max ? Number(formData.salary_max) : null,
         status: 'draft',
-        created_by: auth.getCurrentUser().id
+        created_by: auth.getCurrentUser()?.id
       };
       
       // Create or update job based on mode
+      let response;
       if (isEditMode) {
-        await jobAPI.updateJob(id, jobData);
+        response = await jobAPI.updateJob(id, jobData);
       } else {
-        await jobAPI.createJob(jobData);
+        response = await jobAPI.createJob(jobData);
       }
       
-      // Show success message and redirect after a delay
+      // Show success message and redirect
       alert("Job draft saved successfully");
       navigate('/company/lowongan');
       
     } catch (err) {
       console.error("Error saving draft:", err);
-      setSubmitError(err.response?.data?.message || "Failed to save job draft. Please try again.");
+      
+      // Handle specific error cases
+      if (err.message === "Company profile not found" || 
+          (err.response?.status === 404 && err.response?.data?.message?.includes("company"))) {
+        setSubmitError("Company profile not found. Please create a company profile first.");
+        setTimeout(() => {
+          navigate('/company/profil');
+        }, 2000);
+      } else {
+        setSubmitError(
+          err.response?.data?.message || "Failed to save job draft. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -196,11 +257,48 @@ export default function CompanyPasangLowongan() {
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-2xl font-semibold text-gray-900 mb-6">
-            {isEditMode ? 'Edit Lowongan Kerja' : 'Pasang Lowongan Kerja'}
+            {isEditMode ? 'Edit Job' : 'Post New Job'}
           </h1>
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             <span className="ml-3 text-gray-700">Loading job data...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If there's a company profile error, show message and redirect option
+  if (companyProfileError) {
+    return (
+      <div className="font-sans">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+            {isEditMode ? 'Edit Job' : 'Post New Job'}
+          </h1>
+          
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-yellow-700">
+                  You need to complete your company profile before posting jobs.
+                </p>
+                <div className="mt-4">
+                  <button
+                    onClick={() => navigate('/company/profil')}
+                    className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-2 px-4 rounded"
+                  >
+                    Complete Company Profile
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -212,7 +310,7 @@ export default function CompanyPasangLowongan() {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-semibold text-gray-900 mb-6">
-          {isEditMode ? 'Edit Lowongan Kerja' : 'Pasang Lowongan Kerja'}
+          {isEditMode ? 'Edit Job' : 'Post New Job'}
         </h1>
         
         {submitSuccess && (
@@ -256,12 +354,12 @@ export default function CompanyPasangLowongan() {
             <form onSubmit={handleSubmit}>
               {/* Job Details Section */}
               <div className="mb-8">
-                <h2 className="text-lg font-medium text-gray-900 mb-4" >Detail Lowongan</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-4" >Job Details</h2>
                 
                 <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                   <div className="sm:col-span-4">
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700 text-left">
-                      Judul Pekerjaan <span className="text-red-600">*</span>
+                      Job Title <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
                       <input
@@ -272,14 +370,14 @@ export default function CompanyPasangLowongan() {
                         value={formData.title}
                         onChange={handleInputChange}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="Contoh: Senior Frontend Developer"
+                        placeholder="e.g., Senior Frontend Developer"
                       />
                     </div>
                   </div>
 
                   <div className="sm:col-span-2">
                     <label htmlFor="department" className="block text-sm font-medium text-gray-700 text-left">
-                      Departemen
+                      Department
                     </label>
                     <div className="mt-1">
                       <input
@@ -289,14 +387,14 @@ export default function CompanyPasangLowongan() {
                         value={formData.department}
                         onChange={handleInputChange}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="Contoh: Engineering"
+                        placeholder="e.g., Engineering"
                       />
                     </div>
                   </div>
 
                   <div className="sm:col-span-3">
                     <label htmlFor="job_type" className="block text-sm font-medium text-gray-700 text-left">
-                      Jenis Pekerjaan <span className="text-red-600">*</span>
+                      Job Type <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
                       <select
@@ -307,7 +405,7 @@ export default function CompanyPasangLowongan() {
                         onChange={handleInputChange}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                       >
-                        <option value="">Pilih jenis pekerjaan</option>
+                        <option value="">Select job type</option>
                         <option value="full-time">Full-time</option>
                         <option value="part-time">Part-time</option>
                         <option value="contract">Contract</option>
@@ -319,7 +417,7 @@ export default function CompanyPasangLowongan() {
 
                   <div className="sm:col-span-3">
                     <label htmlFor="work_mode" className="block text-sm font-medium text-gray-700 text-left">
-                      Mode Kerja <span className="text-red-600">*</span>
+                      Work Mode <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
                       <select
@@ -339,7 +437,7 @@ export default function CompanyPasangLowongan() {
 
                   <div className="sm:col-span-3">
                     <label htmlFor="location" className="block text-sm font-medium text-gray-700 text-left">
-                      Lokasi <span className="text-red-600">*</span>
+                      Location <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
                       <input
@@ -350,7 +448,7 @@ export default function CompanyPasangLowongan() {
                         value={formData.location}
                         onChange={handleInputChange}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="Contoh: Jakarta"
+                        placeholder="e.g., Jakarta"
                       />
                     </div>
                   </div>
@@ -378,7 +476,7 @@ export default function CompanyPasangLowongan() {
 
                   <div className="sm:col-span-3">
                     <label htmlFor="salary_min" className="block text-sm font-medium text-gray-700 text-left">
-                      Gaji Minimum
+                      Minimum Salary
                     </label>
                     <div className="mt-1">
                       <input
@@ -388,14 +486,14 @@ export default function CompanyPasangLowongan() {
                         value={formData.salary_min}
                         onChange={handleInputChange}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="Contoh: 10000000"
+                        placeholder="e.g., 10000000"
                       />
                     </div>
                   </div>
 
                   <div className="sm:col-span-3">
                     <label htmlFor="salary_max" className="block text-sm font-medium text-gray-700 text-left">
-                      Gaji Maximum
+                      Maximum Salary
                     </label>
                     <div className="mt-1">
                       <input
@@ -405,7 +503,7 @@ export default function CompanyPasangLowongan() {
                         value={formData.salary_max}
                         onChange={handleInputChange}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="Contoh: 15000000"
+                        placeholder="e.g., 15000000"
                       />
                     </div>
                   </div>
@@ -414,12 +512,12 @@ export default function CompanyPasangLowongan() {
 
               {/* Description Section */}
               <div className="mb-8">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Deskripsi dan Persyaratan</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Description and Requirements</h2>
                 
                 <div className="space-y-6">
                   <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700 text-left">
-                      Deskripsi Pekerjaan <span className="text-red-600">*</span>
+                      Job Description <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
                       <textarea
@@ -430,21 +528,14 @@ export default function CompanyPasangLowongan() {
                         value={formData.description}
                         onChange={handleInputChange}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="Deskripsikan posisi pekerjaan, tanggung jawab, dan kualifikasi yang dibutuhkan"
+                        placeholder="Describe the job position, responsibilities, and required qualifications"
                       />
                     </div>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Gunakan format daftar untuk memudahkan pembacaan. Contoh:
-                      <br />
-                      - Mengembangkan aplikasi web menggunakan React.js
-                      <br />
-                      - Berkolaborasi dengan tim backend untuk integrasi API
-                    </p>
                   </div>
 
                   <div>
                     <label htmlFor="requirements" className="block text-sm font-medium text-gray-700 text-left">
-                      Persyaratan <span className="text-red-600">*</span>
+                      Requirements <span className="text-red-600">*</span>
                     </label>
                     <div className="mt-1">
                       <textarea
@@ -455,14 +546,14 @@ export default function CompanyPasangLowongan() {
                         value={formData.requirements}
                         onChange={handleInputChange}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="Tuliskan persyaratan dan kualifikasi yang dibutuhkan (pendidikan, pengalaman, keahlian, dll)"
+                        placeholder="List requirements and qualifications (education, experience, skills, etc.)"
                       />
                     </div>
                   </div>
 
                   <div>
                     <label htmlFor="benefits" className="block text-sm font-medium text-gray-700 text-left">
-                      Benefit
+                      Benefits
                     </label>
                     <div className="mt-1">
                       <textarea
@@ -472,7 +563,7 @@ export default function CompanyPasangLowongan() {
                         value={formData.benefits}
                         onChange={handleInputChange}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="Tuliskan benefit yang ditawarkan (asuransi kesehatan, remote work, flexible hours, dll)"
+                        placeholder="List benefits offered (health insurance, remote work, flexible hours, etc.)"
                       />
                     </div>
                   </div>
@@ -487,14 +578,14 @@ export default function CompanyPasangLowongan() {
                   disabled={loading}
                   className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                 >
-                  {loading ? 'Processing...' : 'Simpan Draft'}
+                  {loading ? 'Processing...' : 'Save Draft'}
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
                   className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                 >
-                  {loading ? 'Processing...' : isEditMode ? 'Update Lowongan' : 'Publikasikan Lowongan'}
+                  {loading ? 'Processing...' : isEditMode ? 'Update Job' : 'Publish Job'}
                 </button>
               </div>
             </form>

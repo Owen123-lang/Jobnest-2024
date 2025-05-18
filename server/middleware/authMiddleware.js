@@ -64,3 +64,30 @@ export const checkCompanyOwnerOrAdmin = async (req, res, next) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+// New middleware to automatically get company_id for the user
+export const getCompanyIdForUser = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    
+    // Find company associated with this user
+    const companyResult = await pool.query(
+      `SELECT id FROM companies WHERE user_id = $1`,
+      [userId]
+    );
+    
+    if (companyResult.rows.length === 0) {
+      return res.status(404).json({ 
+        message: "No company profile found for this user. Please create a company profile first.",
+        missingCompanyProfile: true
+      });
+    }
+    
+    // Add company_id to request body
+    req.body.company_id = companyResult.rows[0].id;
+    next();
+  } catch (error) {
+    console.error("Error getting company ID for user:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

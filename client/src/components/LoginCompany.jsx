@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../utils/api';
+import { auth, companyAPI } from '../utils/api';
 
 function LoginCompany() {
   const [formData, setFormData] = useState({
@@ -37,9 +37,39 @@ function LoginCompany() {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
-      // Redirect to company dashboard
-      navigate('/company/dashboard');
+      // Check if company profile exists for this user
+      try {
+        const userId = response.data.user.id;
+        console.log('Fetching company profile for user ID:', userId);
+        const companyResponse = await companyAPI.getCompanyByUserId(userId);
+        
+        // Update user data with company_id for future reference
+        if (companyResponse.data && companyResponse.data.id) {
+          const user = response.data.user;
+          user.company_id = companyResponse.data.id;
+          
+          // Update stored user data with company_id
+          localStorage.setItem('user', JSON.stringify(user));
+          console.log('Updated user data with company ID:', user);
+        }
+        
+        // If we got here, company profile exists, redirect to dashboard
+        navigate('/company/dashboard');
+      } catch (profileErr) {
+        console.error('Error fetching company profile:', profileErr);
+        
+        // Check if error is 404 (profile doesn't exist)
+        if (profileErr.response && profileErr.response.status === 404) {
+          console.log('Company profile not found, redirecting to profile creation page');
+          // Redirect to create profile page instead
+          navigate('/company/profil');
+        } else {
+          // For any other error, still redirect to dashboard
+          navigate('/company/dashboard');
+        }
+      }
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);

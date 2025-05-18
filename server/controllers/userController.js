@@ -4,7 +4,7 @@ import pool from "../config/db.js";
 
 // === REGISTER ===
 export const registerUser = async (req, res) => {
-  const {email, password, role } = req.body;
+  const {email, password, role, companyName, website, industry, description } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ message: "All fields are required." });
@@ -21,16 +21,52 @@ export const registerUser = async (req, res) => {
 
     // Default role is 'user' if not specified
     const userRole = role === 'company' ? 'company' : 'user';
+    
+    // Begin transaction
+    await pool.query('BEGIN');
+    
+    try {
+      // Create user
+      const newUser = await pool.query(
+        "INSERT INTO users (email, password, role, created_at, last_login) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id, email, role, created_at",
+        [email, hashedPassword, userRole]
+      );
 
-    const newUser = await pool.query(
-      "INSERT INTO users (email, password, role, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id, email, role, created_at",
-      [email, hashedPassword, userRole]
-    );
+      const user = newUser.rows[0];
+      
+      // If role is 'company', automatically create a company profile
+      if (userRole === 'company') {
+        // Use provided company information or set defaults
+        const name = companyName || email.split('@')[0]; // Default name from email if not provided
+        
+        await pool.query(
+          `INSERT INTO companies (user_id, name, website, industry, description) 
+           VALUES ($1, $2, $3, $4, $5)`,
+          [user.id, name, website || null, industry || null, description || null]
+        );
+      }
+      
+      // Commit transaction
+      await pool.query('COMMIT');
+      
+      // Generate JWT token for immediate authentication
+      const token = jwt.sign(
+        { id: user.id, email: user.email, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
 
-    res.status(201).json({
-      message: "User registered successfully.",
-      user: newUser.rows[0],
-    });
+      res.status(201).json({
+        message: "User registered successfully.",
+        token, // Return token for immediate login
+        user: user
+      });
+      
+    } catch (error) {
+      // Rollback transaction on error
+      await pool.query('ROLLBACK');
+      throw error;
+    }
 
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
