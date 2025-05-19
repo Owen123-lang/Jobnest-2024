@@ -1,13 +1,34 @@
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
+import cloudinary from "../config/cloudinary.js";
+import streamifier from "streamifier";
+
+// Helper function to cloudinary upload
+const uploadToCloudinary = (buffer) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            {
+                folder: "profiles",
+                resource_type: "image",
+                transformation: [
+                    { width: 500, height: 500, crop: "limit" },
+                    { quality: "auto:good" }
+                ]
+            },
+            (error, result) => {
+                if (result) resolve(result);
+                else reject(error);
+            }
+        );
+        streamifier.createReadStream(buffer).pipe(stream);
+    });
+};
 
 // Create new profile
 export const createProfile = async (req, res) => {
     const userId = req.user.id; // Get from JWT token
-    const { full_name, phone, birth_date, bio } = req.body;
-
-    // profile picture come from file upload middleware
-    const profile_picture = req.body.profile_picture || null;
+    const { full_name, phone, birth_date, bio, location } = req.body;
+    let profile_picture = null;
 
     try {
         // Check if profile already exists
@@ -22,19 +43,35 @@ export const createProfile = async (req, res) => {
             });
         }
 
+        // Handle profile picture upload
+        if (req.file && req.file.buffer) {
+            try {
+                const uploadResult = await uploadToCloudinary(req.file.buffer);
+                profile_picture = uploadResult.secure_url;
+                console.log("Profile picture uploaded to Cloudinary:", profile_picture);
+            } catch (uploadError) {
+                console.error("Error uploading profile picture:", uploadError);
+                return res.status(500).json({ 
+                    message: "Error uploading profile picture", 
+                    error: uploadError.message 
+                });
+            } 
+        }
+
         // Create new profile
         const result = await pool.query(
             `INSERT INTO profiles 
-            (user_id, full_name, phone, birth_date, bio, profile_picture)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            (user_id, full_name, phone, birth_date, bio, location, profile_picture)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *`,
-            [userId, full_name, phone, birth_date, bio, profile_picture]
+            [userId, full_name, phone, birth_date, bio, location, profile_picture]
         );
         
         res.status(201).json({
             message: "Profile created successfully.",
             profile: result.rows[0]
         });
+
     } catch (error) {
         console.error("Error creating profile:", error);
         res.status(500).json({ message: "Server error", error: error.message });
@@ -46,7 +83,7 @@ export const updateProfile = async (req, res) => {
     const userId = req.user.id; // Get from JWT token
     const updates = req.body; // Get all fields from request body
     
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(updates).length === 0 && !req.file) {
         return res.status(400).json({
             message: "No fields provided for update"
         });
@@ -66,6 +103,23 @@ export const updateProfile = async (req, res) => {
         }
         
         const currentProfile = existingProfile.rows[0];
+
+        // Fix the typo in variable name
+        let profile_picture = updates.profile_picture;
+
+        if (req.file && req.file.buffer) {
+            try {
+                const uploadResult = await uploadToCloudinary(req.file.buffer);
+                profile_picture = uploadResult.secure_url;
+                console.log("Profile picture uploaded to Cloudinary:", profile_picture);
+            } catch (uploadError) {
+                console.error("Error uploading profile picture:", uploadError);
+                return res.status(500).json({ 
+                    message: "Error uploading profile picture", 
+                    error: uploadError.message 
+                });
+            }
+        }
         
         // Prepare update query parts
         const fields = [];
@@ -86,6 +140,14 @@ export const updateProfile = async (req, res) => {
         }
         
         if (updates.birth_date !== undefined) {
+            // Validate birth_date format (YYYY-MM-DD)
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(updates.birth_date)) {
+                return res.status(400).json({ 
+                    message: "Invalid birth date format. Please use YYYY-MM-DD format." 
+                });
+            }
+
             fields.push(`birth_date = $${paramCount}`);
             values.push(updates.birth_date);
             paramCount++;
@@ -97,10 +159,25 @@ export const updateProfile = async (req, res) => {
             paramCount++;
         }
         
-        if (updates.profile_picture !== undefined) {
-            fields.push(`profile_picture = $${paramCount}`);
-            values.push(updates.profile_picture);
+        // Add location field to update
+        if (updates.location !== undefined) {
+            fields.push(`location = $${paramCount}`);
+            values.push(updates.location);
             paramCount++;
+        }
+        
+        // Use the corrected profile_picture variable
+        if (profile_picture !== undefined) {
+            fields.push(`profile_picture = $${paramCount}`);
+            values.push(profile_picture);
+            paramCount++;
+        }
+
+        // If no fields to update, return early
+        if (fields.length === 0) {
+            return res.status(400).json({
+                message: "No fields provided for update"
+            });
         }
         
         // Add user_id as the last parameter
@@ -208,6 +285,7 @@ export const getMyProfile = async (req, res) => {
                 phone: userData.phone,
                 birth_date: userData.birth_date,
                 bio: userData.bio,
+                location: userData.location,
                 profile_picture: userData.profile_picture
             }
         });
@@ -248,9 +326,9 @@ export const getAllProfiles = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit; 
 
-        // Get profile with user data
+        // Get profile with user data - Fixed missing comma and column name
         const profilesResult = await pool.query(
-            `SELECT p.* u.email, u.role, u.created_at
+            `SELECT p.*, u.email, u.role, u.created_at
             FROM profiles p
             JOIN users u ON p.user_id = u.id
             ORDER BY p.id
