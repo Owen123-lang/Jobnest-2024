@@ -11,7 +11,6 @@ function RegisterUser() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -25,7 +24,6 @@ function RegisterUser() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess(false);
 
     // Make sure we have all required fields
     if (!formData.name || !formData.email || !formData.password) {
@@ -48,11 +46,16 @@ function RegisterUser() {
       
       console.log('Registration successful:', response.data);
       
-      setSuccess(true);
-      // Auto-redirect after successful registration
-      setTimeout(() => {
-        navigate('/login/user');
-      }, 1500);
+      // Extract token and user data
+      const { token, user } = response.data;
+      
+      // Store token and user data in localStorage (automatic login)
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Immediate redirect to user search page
+      navigate('/user/search');
+      
     } catch (err) {
       console.error('Registration error:', err);
       
@@ -94,12 +97,6 @@ function RegisterUser() {
         {error && (
           <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
             {error}
-          </div>
-        )}
-        
-        {success && (
-          <div className="mt-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-            Registration successful! Redirecting to login page...
           </div>
         )}
         
