@@ -101,24 +101,28 @@ const UserPencarianLowongan = () => {
       );
     }
     
-    // Apply location filter
+    // Apply location filter (contains match)
     if (location) {
+      const locLower = location.toLowerCase();
       filtered = filtered.filter(job => 
-        job.location && job.location.toLowerCase() === location.toLowerCase()
+        job.location && job.location.toLowerCase().includes(locLower)
       );
     }
     
-    // Apply job type filter
+    // Apply job type filter (contains match)
     if (jobType) {
+      const typeLower = jobType.toLowerCase();
       filtered = filtered.filter(job => 
-        job.job_type && job.job_type.toLowerCase() === jobType.toLowerCase()
+        job.job_type && job.job_type.toLowerCase().includes(typeLower)
       );
     }
     
-    // Apply work mode filter
+    // Apply work mode filter (normalize and exact match)
     if (workMode) {
+      const normalize = str => str.toLowerCase().replace(/[^a-z]/g, '');
+      const target = normalize(workMode);
       filtered = filtered.filter(job => 
-        job.work_mode && job.work_mode.toLowerCase() === workMode.toLowerCase()
+        job.work_mode && normalize(job.work_mode) === target
       );
     }
     
@@ -177,11 +181,10 @@ const UserPencarianLowongan = () => {
             onChange={(e) => setLocation(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-md"
           >
-            <option value="">Lokasi (Semua)</option>
-            <option value="Jakarta">Jakarta</option>
-            <option value="Bandung">Bandung</option>
-            <option value="Surabaya">Surabaya</option>
-            <option value="Remote">Remote</option>
+            <option value="">Location (All)</option>
+            {Array.from(new Set(jobData.map(job => job.location))).map((loc) => (
+              loc && <option key={loc} value={loc}>{loc}</option>
+            ))}
           </select>
           
           <select
@@ -192,8 +195,6 @@ const UserPencarianLowongan = () => {
             <option value="">Jenis Kerja (Semua)</option>
             <option value="Full-Time">Full-Time</option>
             <option value="Part-Time">Part-Time</option>
-            <option value="Contract">Contract</option>
-            <option value="Freelance">Freelance</option>
             <option value="Internship">Internship</option>
           </select>
           
