@@ -18,7 +18,7 @@ export default function CompanyPasangLowongan() {
   const [formData, setFormData] = useState({
     title: "",
     department: "",
-    job_type: "",
+    job_type: "full_time",
     work_mode: "onsite", // default value
     location: "",
     salary_min: "",
@@ -131,7 +131,7 @@ export default function CompanyPasangLowongan() {
     setSubmitError(null);
     
     try {
-      // Validate company profile
+      // Validate company profile exists (but don't include it in request)
       if (!companyProfile?.id) {
         throw new Error("Company profile not found");
       }
@@ -141,14 +141,22 @@ export default function CompanyPasangLowongan() {
         throw new Error("Please fill all required fields");
       }
       
-      // Format job data for API
+      // Format job data for API - DO NOT include company_id or created_by
+      // The backend middleware will handle company_id automatically
       const jobData = {
-        ...formData,
         company_id: companyProfile.id,
+        title: formData.title,
+        job_type: formData.job_type,
+        work_mode: formData.work_mode,
+        location: formData.location,
+        description: formData.description,
+        department: formData.department || null,
         salary_min: formData.salary_min ? Number(formData.salary_min) : null,
         salary_max: formData.salary_max ? Number(formData.salary_max) : null,
-        created_by: auth.getCurrentUser()?.id
+        status: formData.status
       };
+      
+      console.log("Sending job data:", jobData);
       
       // Create or update job based on mode
       let response;
@@ -210,20 +218,29 @@ export default function CompanyPasangLowongan() {
     setSubmitError(null);
     
     try {
-      // Validate company profile
+      // Validate company profile exists (but don't include it in request)
       if (!companyProfile?.id) {
         throw new Error("Company profile not found");
       }
       
-      // Format job data for API
+      // Format job data for API - DO NOT include company_id or created_by
+      // The backend middleware will handle company_id automatically
       const jobData = {
-        ...formData,
         company_id: companyProfile.id,
+        title: formData.title,
+        job_type: formData.job_type || 'full-time',
+        work_mode: formData.work_mode || 'onsite',
+        location: formData.location || '',
+        description: formData.description || '',
+        requirements: formData.requirements || null,
+        benefits: formData.benefits || null,
+        department: formData.department || null,
         salary_min: formData.salary_min ? Number(formData.salary_min) : null,
         salary_max: formData.salary_max ? Number(formData.salary_max) : null,
-        status: 'draft',
-        created_by: auth.getCurrentUser()?.id
+        status: 'draft' // Always draft when using this function
       };
+      
+      console.log("Sending draft job data:", jobData);
       
       // Create or update job based on mode
       let response;
@@ -412,11 +429,9 @@ export default function CompanyPasangLowongan() {
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                       >
                         <option value="">Select job type</option>
-                        <option value="full-time">Full-time</option>
-                        <option value="part-time">Part-time</option>
-                        <option value="contract">Contract</option>
+                        <option value="full_time">Full-time</option>
+                        <option value="part_time">Part-time</option>
                         <option value="internship">Internship</option>
-                        <option value="freelance">Freelance</option>
                       </select>
                     </div>
                   </div>

@@ -105,17 +105,17 @@ export const auth = {
 export const userAPI = {
   // Get user profile
   getProfile: () => {
-    return axiosInstance.get('/profiles/me');
+    return axiosInstance.get('/profile/me');
   },
 
   // Update user profile
   updateProfile: (profileData) => {
-    return axiosInstance.put('/profiles', profileData);
+    return axiosInstance.put('/profile', profileData);
   },
 
   // Create user profile
   createProfile: (profileData) => {
-    return axiosInstance.post('/profiles', profileData);
+    return axiosInstance.post('/profile', profileData);
   },
 
   // Get user applications
@@ -126,17 +126,17 @@ export const userAPI = {
 
   // Get user favorites
   getFavorites: () => {
-    return axiosInstance.get('/favorites');
+    return axiosInstance.get('/favorite/user');
   },
 
   // Add job to favorites
   addToFavorites: (jobId) => {
-    return axiosInstance.post('/favorites', { job_id: jobId });
+    return axiosInstance.post('/favorite/create', { job_id: jobId });
   },
 
   // Remove job from favorites
-  removeFromFavorites: (jobId) => {
-    return axiosInstance.delete(`/favorites/${jobId}`);
+  removeFromFavorites: (favoriteId) => {
+    return axiosInstance.delete(`/favorite/delete/${favoriteId}`);
   }
 };
 
@@ -184,7 +184,7 @@ export const companyAPI = {
       
       // Use direct axios to avoid axiosInstance interceptor issues with FormData
       const token = localStorage.getItem('token');
-      return axios.post(`${API_URL}/companies`, formData, {
+      return axios.post(`${API_BASE_URL}/companies`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': token ? `Bearer ${token}` : undefined
@@ -253,7 +253,7 @@ export const companyAPI = {
       
       // Use direct axios to avoid axiosInstance interceptor issues with FormData
       const token = localStorage.getItem('token');
-      return axios.put(`${API_URL}/companies/${companyId}`, formData, {
+      return axios.put(`${API_BASE_URL}/companies/${companyId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': token ? `Bearer ${token}` : undefined
@@ -346,7 +346,7 @@ export const notificationAPI = {
   // Get user notifications with improved error handling
   getNotifications: () => {
     console.log('Fetching notifications...');
-    return axiosInstance.get('/notifications')
+    return axiosInstance.get('/notification/user')
       .catch(error => {
         // Handle 404 errors gracefully (possibly endpoint not implemented yet)
         if (error.response && error.response.status === 404) {
@@ -361,7 +361,7 @@ export const notificationAPI = {
 
   // Mark notification as read
   markAsRead: (notificationId) => {
-    return axiosInstance.put(`/notifications/${notificationId}/read`)
+    return axiosInstance.put(`/notification/read`, { notification_id: notificationId })
       .catch(error => {
         // Handle 404 errors gracefully
         if (error.response && error.response.status === 404) {
@@ -380,7 +380,7 @@ export const uploadAPI = {
     const formData = new FormData();
     formData.append('file', file);
     
-    return axios.post(`${API_URL}/upload/${fileType}`, formData, {
+    return axios.post(`${API_BASE_URL}/upload/${fileType}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -406,7 +406,7 @@ export const companyAdminAPI = {
     if (profileData instanceof FormData) {
       // Use direct axios for FormData to handle file uploads
       const token = localStorage.getItem('token');
-      return axios.post(`${API_URL}/company-admin/profile`, profileData, {
+      return axios.post(`${API_BASE_URL}/company-admin/profile`, profileData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': token ? `Bearer ${token}` : undefined
@@ -427,7 +427,7 @@ export const companyAdminAPI = {
   updateCompanyProfile: (profileData) => {
     if (profileData instanceof FormData) {
       const token = localStorage.getItem('token');
-      return axios.put(`${API_URL}/company-admin/profile`, profileData, {
+      return axios.put(`${API_BASE_URL}/company-admin/profile`, profileData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': token ? `Bearer ${token}` : undefined

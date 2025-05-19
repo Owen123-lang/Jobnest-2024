@@ -2,56 +2,73 @@ import pool from "../config/db.js";
 
 // CREATE - Tambah lowongan baru
 export const createJob = async (req, res) => {
-  const { 
-    company_id,
-    title, 
-    job_type, 
-    work_mode, 
-    location, 
-    salary_min,
-    salary_max, 
-    description, 
-    deadline,
-    status = 'active' // Default status is active
-  } = req.body;
-
-  // Validasi input
-  if (!title || !description) {
-    return res.status(400).json({ message: "Title and description are required." });
-  }
-
-  if (!company_id) {
-    return res.status(400).json({ 
-      message: "Company ID is required. Please complete your company profile first.",
-      missingCompanyProfile: true
-    });
-  }
-
   try {
+    console.log("Job creation request body:", req.body); // Log entire request for debugging
+    
+    const { 
+      company_id,
+      title, 
+      job_type, 
+      work_mode, 
+      location, 
+      salary_min,
+      salary_max, 
+      description, 
+      status = 'active' // Default status is active
+    } = req.body;
+
+    // Validasi input
+    if (!title || !description) {
+      return res.status(400).json({ message: "Title and description are required." });
+    }
+
+    if (!company_id) {
+      return res.status(400).json({ 
+        message: "Company ID is required. Please complete your company profile first.",
+        missingCompanyProfile: true
+      });
+    }
+
+    // Validate data types
+    const sanitizedData = {
+      company_id: parseInt(company_id),
+      title: String(title),
+      job_type: job_type ? String(job_type) : 'full_time',
+      work_mode: work_mode ? String(work_mode) : 'onsite',
+      location: location ? String(location) : null,
+      salary_min: salary_min ? parseInt(salary_min) : null,
+      salary_max: salary_max ? parseInt(salary_max) : null,
+      description: String(description),
+      status: status ? String(status) : 'active'
+    };
+
+    console.log("Sanitized job data:", sanitizedData);
+
     // Company existence is already verified by the getCompanyIdForUser middleware
     // Insert the new job
     const query = `
-      INSERT INTO jobs (
-        company_id, title, job_type, work_mode, location,
-        salary_min, salary_max, description, created_at, deadline, status
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10)
-      RETURNING *;
-    `;
+  INSERT INTO jobs (
+    company_id, title, job_type, work_mode, location,
+    salary_min, salary_max, description, status, created_at
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+  RETURNING *;
+`;
 
-    const values = [
-      company_id,
-      title,
-      job_type || 'full_time',
-      work_mode || 'onsite',
-      location,
-      salary_min,
-      salary_max,
-      description,
-      deadline,
-      status
-    ];
+const values = [
+  sanitizedData.company_id,
+  sanitizedData.title,
+  sanitizedData.job_type,
+  sanitizedData.work_mode,
+  sanitizedData.location,
+  sanitizedData.salary_min,
+  sanitizedData.salary_max,
+  sanitizedData.description,
+  sanitizedData.status
+];
 
+
+    console.log("SQL values:", values);
     const result = await pool.query(query, values);
 
     res.status(201).json({
@@ -60,7 +77,12 @@ export const createJob = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating job:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error details:", error.stack);
+    res.status(500).json({ 
+      message: "Server error during job creation", 
+      error: error.message,
+      details: "Check server logs for more information" 
+    });
   }
 };
 
@@ -150,7 +172,6 @@ export const updateJob = async (req, res) => {
     salary_min,
     salary_max, 
     description, 
-    deadline,
     status
   } = req.body;
 
@@ -195,7 +216,6 @@ export const updateJob = async (req, res) => {
         salary_min = $5, 
         salary_max = $6, 
         description = $7,
-        deadline = $8,
         status = $9
       WHERE id = $10
       RETURNING *;
@@ -209,7 +229,6 @@ export const updateJob = async (req, res) => {
       salary_min !== undefined ? salary_min : jobCheck.rows[0].salary_min,
       salary_max !== undefined ? salary_max : jobCheck.rows[0].salary_max,
       description || jobCheck.rows[0].description,
-      deadline || jobCheck.rows[0].deadline,
       status || jobCheck.rows[0].status,
       jobId
     ];

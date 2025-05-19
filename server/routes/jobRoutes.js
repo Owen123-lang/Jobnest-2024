@@ -9,8 +9,8 @@ router.get("/", getAllJobs);
 router.get("/:id", getJobById);
 
 // Route khusus untuk company (perlu login dan role company)
-router.post("/", verifyToken, checkCompanyRole, getCompanyIdForUser, createJob);
 router.put("/:id", verifyToken, checkCompanyRole, updateJob);
 router.delete("/delete/:id", verifyToken, checkCompanyRole, deleteJob);
+router.post("/", verifyToken, checkCompanyRole, getCompanyIdForUser, createJob);
 
 export default router;
