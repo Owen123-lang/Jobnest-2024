@@ -44,11 +44,11 @@ app.get("/", (req, res) => {
 //  route untuk user
 app.use("/api/users", userRoutes);
 
-// Route untuk aplikasi
-app.use("/api", applicationRoutes);
-
-// Route untuk jobs
+// Route untuk jobs (mount before applications to avoid catch-all)
 app.use("/api/jobs", jobRoutes);
+
+// Route untuk applications
+app.use("/api/applications", applicationRoutes);
 
 // Route untuk upload CV
 app.use("/api", uploadRoutes);

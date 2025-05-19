@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { jobAPI } from '../utils/api';
@@ -8,42 +9,81 @@ const UserPencarianLowongan = () => {
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
   // Filter states
   const [location, setLocation] = useState('');
   const [jobType, setJobType] = useState('');
   const [workMode, setWorkMode] = useState('');
   const [search, setSearch] = useState('');
 
-  // Fetch all jobs on component mount
-  useEffect(() => {
-    fetchJobs();
-  }, []);
-
-  // Update filtered jobs whenever filters change
-  useEffect(() => {
-    applyFilters();
-  }, [jobData, location, jobType, workMode, search]);
-
+  // single fetchJobs function outside useEffect
   const fetchJobs = async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Prepare filter parameters
       const filters = {};
       if (location) filters.location = location;
       if (jobType) filters.job_type = jobType;
       if (workMode) filters.work_mode = workMode;
-      
+      if (search) filters.search = search;
+      console.log("Fetching jobs with filters:", filters);
       const response = await jobAPI.getJobs(filters);
+      console.log("Jobs fetched successfully:", response.data.length);
       setJobData(response.data);
       setFilteredJobs(response.data);
     } catch (err) {
       console.error('Error fetching jobs:', err);
-      setError('Failed to load jobs. Please try again later.');
+      if (err.response) {
+        console.error('Response status:', err.response.status);
+        if (err.response.status === 401) {
+          setError('Authentication issue with the server. Please try refreshing the page.');
+        } else if (err.response.status === 403) {
+          setError('You do not have permission to access jobs.');
+        } else {
+          setError(`Server error: ${err.response.data.message || 'Failed to load jobs'}`);
+        }
+      } else if (err.request) {
+        setError('Network issue. Server is not responding.');
+      } else {
+        setError(`Error loading jobs: ${err.message}`);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // restore filters
+    const saved = JSON.parse(localStorage.getItem('jobSearchFilters') || '{}');
+    if (saved.location) setLocation(saved.location);
+    if (saved.jobType) setJobType(saved.jobType);
+    if (saved.workMode) setWorkMode(saved.workMode);
+    if (saved.search) setSearch(saved.search);
+
+    fetchJobs();
+
+    return () => {
+      // save filters on unmount
+      localStorage.setItem('jobSearchFilters', JSON.stringify({ location, jobType, workMode, search }));
+    };
+  }, []);
+
+  // apply local filters on data change
+  useEffect(() => {
+    applyFilters();
+  }, [jobData, location, jobType, workMode, search]);
+
+  const handleSearch = () => {
+    fetchJobs();
+  };
+
+  const handleRetry = () => {
+    if (retryCount < maxRetries) {
+      setRetryCount(prev => prev + 1);
+      fetchJobs();
+    } else {
+      setError('Maximum retry attempts reached. Please refresh the page.');
     }
   };
 
@@ -83,10 +123,6 @@ const UserPencarianLowongan = () => {
     }
     
     setFilteredJobs(filtered);
-  };
-
-  const handleSearch = () => {
-    fetchJobs();
   };
 
   const formatSalary = (min, max) => {
@@ -197,13 +233,30 @@ const UserPencarianLowongan = () => {
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-            <p>{error}</p>
-            <button 
-              onClick={fetchJobs} 
-              className="mt-2 text-sm text-blue-600 hover:text-blue-800"
-            >
-              Try Again
-            </button>
+            <p className="font-bold">Error loading jobs</p>
+            <p className="text-sm">{error}</p>
+            {retryCount < maxRetries && (
+              <div className="mt-2 flex space-x-4">
+                <button 
+                  onClick={handleRetry} 
+                  className="text-sm bg-red-100 hover:bg-red-200 text-red-800 py-1 px-3 rounded"
+                >
+                  Try Again
+                </button>
+                <button 
+                  onClick={() => {
+                    setLocation('');
+                    setJobType('');
+                    setWorkMode('');
+                    setSearch('');
+                    fetchJobs();
+                  }} 
+                  className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 py-1 px-3 rounded"
+                >
+                  Reset Filters & Try Again
+                </button>
+              </div>
+            )}
           </div>
         )}
 

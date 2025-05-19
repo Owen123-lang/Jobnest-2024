@@ -1,29 +1,41 @@
-import { parse } from "dotenv";
+import dotenv from "dotenv";
+dotenv.config(); // load .env ke process.env
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js"; // Make sure this import is present
 
 export const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
-  
+  const token = req.headers.authorization?.split(" ")[1];
+
   if (!token) {
     return res.status(401).json({ message: "Access denied. No token provided." });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Menyimpan data user ke dalam request
+    console.log("Decoded Token:", decoded);  // 🔍 Tambahkan ini
+    req.user = decoded;
     next();
   } catch (error) {
     res.status(400).json({ message: "Invalid token." });
   }
 };
 
+export const checkUserRole = (req, res, next) => {
+  if (req.user.role !== 'user') {
+    return res.status(403).json({ message: "Forbidden: Only job seekers allowed." });
+  }
+  next();
+};
+
+
 export const checkCompanyRole = (req, res, next) => {
+  console.log("[checkCompanyRole] User Role:", req.user?.role);
   if (req.user.role !== 'company') {
     return res.status(403).json({ message: "Forbidden: Only company allowed." });
   }
   next();
 };
+
 
 export const checkCompanyOwnerOrAdmin = async (req, res, next) => {
   try {
@@ -99,3 +111,6 @@ export const getCompanyIdForUser = async (req, res, next) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
+

@@ -1,16 +1,16 @@
 import express from "express";
 import { createJob, getAllJobs, getJobById, updateJob, deleteJob } from "../controllers/jobController.js";
-import { verifyToken, checkCompanyOwnerOrAdmin, checkCompanyRole, getCompanyIdForUser } from "../middleware/authMiddleware.js";
+import { verifyToken, checkUserRole, checkCompanyRole, getCompanyIdForUser } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Route untuk public (tidak perlu login)
+// Public routes for job listings and details
 router.get("/", getAllJobs);
 router.get("/:id", getJobById);
 
-// Route khusus untuk company (perlu login dan role company)
+// ✅ Hanya company bisa CRUD job
+router.post("/", verifyToken, checkCompanyRole, getCompanyIdForUser, createJob);
 router.put("/:id", verifyToken, checkCompanyRole, updateJob);
 router.delete("/delete/:id", verifyToken, checkCompanyRole, deleteJob);
-router.post("/", verifyToken, checkCompanyRole, getCompanyIdForUser, createJob);
 
 export default router;

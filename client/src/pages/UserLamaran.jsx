@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { userAPI, auth } from '../utils/api';
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const UserLamaran = () => {
   const [applications, setApplications] = useState([]);
@@ -20,8 +23,19 @@ const UserLamaran = () => {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const response = await userAPI.getApplications();
-      setApplications(response.data);
+      
+      // Get token from localStorage
+      const token = localStorage.getItem('token');
+      
+      // Fetch applications using direct axios to ensure proper headers
+      const response = await axios.get(`${API_BASE_URL}/user`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      setApplications(response.data || []);
+      setError(null);
     } catch (err) {
       console.error('Error fetching applications:', err);
       setError('Failed to load your applications. Please try again later.');
@@ -47,7 +61,7 @@ const UserLamaran = () => {
         return 'bg-green-100 text-green-800';
       case 'rejected':
         return 'bg-red-100 text-red-800';
-      case 'interview':
+      case 'reviewed':
         return 'bg-blue-100 text-blue-800';
       case 'shortlisted':
         return 'bg-purple-100 text-purple-800';
@@ -64,7 +78,7 @@ const UserLamaran = () => {
       'pending': 'Menunggu',
       'accepted': 'Diterima',
       'rejected': 'Ditolak',
-      'interview': 'Interview',
+      'reviewed': 'Ditinjau',
       'shortlisted': 'Shortlisted'
     };
     
@@ -79,7 +93,7 @@ const UserLamaran = () => {
           <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-4xl font-bold text-gray-600">
             {user && user.name ? user.name.charAt(0).toUpperCase() : 'U'}
           </div>
-          <h2 className="text-xl font-bold mt-4">{user ? user.name : 'User'}</h2>
+          <h2 className="text-xl font-bold mt-4">{user ? user.name || user.email : 'User'}</h2>
           <p className="text-gray-600">{user ? user.email : 'user@example.com'}</p>
         </div>
         <ul className="space-y-4">

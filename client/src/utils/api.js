@@ -307,15 +307,11 @@ export const companyAPI = {
 
 // Job related API calls
 export const jobAPI = {
-  // Get all jobs with optional filters
-  getJobs: (filters = {}) => {
-    return axiosInstance.get('/jobs', { params: filters });
-  },
+  // Get all jobs with optional filters - now using axiosInstance to include token
+  getJobs: (filters = {}) => axiosInstance.get('/jobs', { params: filters }),
 
-  // Get job details
-  getJobById: (jobId) => {
-    return axiosInstance.get(`/jobs/${jobId}`);
-  },
+  // Get job details - now using axiosInstance to include token
+  getJobById: (jobId) => axiosInstance.get(`/jobs/${jobId}`),
 
   // Create new job posting
   createJob: (jobData) => {

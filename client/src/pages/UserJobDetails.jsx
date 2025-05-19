@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { ArrowLeft } from 'lucide-react';
-import { jobAPI, userAPI, companyAPI, auth, uploadAPI } from '../utils/api';
+import { jobAPI, userAPI, companyAPI, auth } from '../utils/api';
+import ApplyJobForm from '../components/ApplyJobForm';
 
 const UserJobDetails = () => {
   const { id } = useParams();
@@ -14,9 +15,6 @@ const UserJobDetails = () => {
   const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
-  const [applicationSuccess, setApplicationSuccess] = useState(false);
-  const [uploadedCv, setUploadedCv] = useState(null);
-  const [applyError, setApplyError] = useState(null);
 
   useEffect(() => {
     fetchJobDetails();
@@ -34,7 +32,7 @@ const UserJobDetails = () => {
       
       // Get company details
       if (jobResponse.data.company_id) {
-        const companyResponse = await companyAPI.getProfile(jobResponse.data.company_id);
+        const companyResponse = await companyAPI.getCompanyById(jobResponse.data.company_id);
         setCompany(companyResponse.data);
       }
     } catch (err) {
@@ -49,10 +47,8 @@ const UserJobDetails = () => {
     if (!auth.isAuthenticated()) return;
     
     try {
-      const response = await userAPI.getFavorites();
-      const userFavorites = response.data;
-      const jobIsFavorite = userFavorites.some(fav => fav.job_id === parseInt(id));
-      setIsFavorite(jobIsFavorite);
+      const response = await userAPI.checkFavorite(parseInt(id));
+      setIsFavorite(response.data.isFavorited);
     } catch (err) {
       console.error('Error checking favorite status:', err);
     }
@@ -74,53 +70,6 @@ const UserJobDetails = () => {
     } catch (err) {
       console.error('Error toggling favorite:', err);
     }
-  };
-
-  const handleCvUpload = (e) => {
-    setUploadedCv(e.target.files[0]);
-  };
-
-  const handleApply = async (e) => {
-    e.preventDefault();
-    
-    if (!auth.isAuthenticated()) {
-      navigate('/login/user');
-      return;
-    }
-    
-    setIsApplying(true);
-    setApplyError(null);
-    
-    try {
-      // Upload CV if provided
-      let cvUrl = null;
-      if (uploadedCv) {
-        const uploadResponse = await uploadAPI.uploadFile(uploadedCv, 'cv');
-        cvUrl = uploadResponse.data.secure_url;
-      }
-      
-      // Submit application
-      await jobAPI.applyForJob(parseInt(id), {
-        cv_url: cvUrl,
-        status: 'pending'
-      });
-      
-      setApplicationSuccess(true);
-      setTimeout(() => {
-        navigate('/user/lamaran');
-      }, 2000);
-    } catch (err) {
-      console.error('Error applying for job:', err);
-      setApplyError('There was an error submitting your application. Please try again.');
-    } finally {
-      setIsApplying(false);
-    }
-  };
-
-  // Helper function to parse job description list items
-  const parseListItems = (text) => {
-    if (!text) return [];
-    return text.split('\n').filter(item => item.trim() !== '');
   };
 
   if (loading) {
@@ -296,68 +245,15 @@ const UserJobDetails = () => {
         
         {/* Application Modal */}
         {isApplying && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full">
-              <h3 className="text-xl font-bold mb-4">Apply for {job.title}</h3>
-              
-              {applicationSuccess ? (
-                <div className="text-center py-4">
-                  <svg className="w-16 h-16 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  <p className="text-xl font-medium mt-2">Application Submitted!</p>
-                  <p className="text-gray-500 mt-1">Redirecting to your applications...</p>
-                </div>
-              ) : (
-                <form onSubmit={handleApply}>
-                  {applyError && (
-                    <div className="mb-4 text-red-500">
-                      {applyError}
-                    </div>
-                  )}
-                  
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700">Upload your CV</label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                      <div className="space-y-1 text-center">
-                        <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <div className="flex text-sm text-gray-600">
-                          <label className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                            <span>Upload a file</span>
-                            <input id="file-upload" name="file-upload" type="file" onChange={handleCvUpload} className="sr-only" accept=".pdf,.doc,.docx" />
-                          </label>
-                          <p className="pl-1">or drag and drop</p>
-                        </div>
-                        <p className="text-xs text-gray-500">PDF, DOC up to 10MB</p>
-                      </div>
-                    </div>
-                    {uploadedCv && (
-                      <p className="mt-2 text-sm text-green-600">
-                        Selected file: {uploadedCv.name}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex justify-end space-x-3">
-                    <button 
-                      type="button" 
-                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                      onClick={() => setIsApplying(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
-                      disabled={!uploadedCv}
-                    >
-                      Submit Application
-                    </button>
-                  </div>
-                </form>
-              )}
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full">
+              <ApplyJobForm 
+                jobId={id} 
+                onSuccess={() => {
+                  setIsApplying(false);
+                }} 
+                onCancel={() => setIsApplying(false)} 
+              />
             </div>
           </div>
         )}
