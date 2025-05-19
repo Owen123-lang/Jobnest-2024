@@ -9,7 +9,8 @@ import {
   updateCompanyProfile,
   getCompanyStaff,
   addStaffMember,
-  removeStaffMember
+  removeStaffMember,
+  getDashboardSummary
 } from "../controllers/companyAdminController.js";
 
 const router = express.Router();
@@ -44,5 +45,8 @@ router.put("/profile", verifyToken, upload.single('logo'), updateCompanyProfile)
 router.get("/:companyId/staff", verifyToken, getCompanyStaff);
 router.post("/:companyId/staff", verifyToken, addStaffMember);
 router.delete("/:companyId/staff/:userId", verifyToken, removeStaffMember);
+
+// Dashboard routes
+router.get("/dashboard-summary", verifyToken, getDashboardSummary);
 
 export default router;

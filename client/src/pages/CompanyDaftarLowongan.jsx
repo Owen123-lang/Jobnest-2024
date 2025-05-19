@@ -345,6 +345,12 @@ export default function CompanyDaftarLowongan() {
                           >
                             View
                           </Link>
+                          <Link 
+                            to={`/company/job/${job.id}/applicants`}
+                            className="text-green-600 hover:text-green-800 mr-3"
+                          >
+                            Applicants
+                          </Link>
                           {deleteConfirm === job.id ? (
                             <>
                               <button 

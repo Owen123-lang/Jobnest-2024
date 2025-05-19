@@ -36,8 +36,8 @@ export const registerCompanyAdmin = async (req, res) => {
 
       // Create company record
       const newCompany = await pool.query(
-        "INSERT INTO companies (name) VALUES ($1) RETURNING id",
-        [company_name]
+        "INSERT INTO companies (user_id, name) VALUES ($1, $2) RETURNING id",
+        [user.id, company_name]
       );
       
       const companyId = newCompany.rows[0].id;
@@ -473,5 +473,66 @@ export const removeStaffMember = async (req, res) => {
   } catch (error) {
     console.error("Error removing staff member:", error);
     return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// GET - Dashboard summary for real-time updates
+export const getDashboardSummary = async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    
+    // If no company_id in the user token, fetch from database
+    if (!companyId) {
+      const companyResult = await pool.query(
+        "SELECT id FROM companies WHERE user_id = $1",
+        [req.user.id]
+      );
+      
+      if (companyResult.rows.length === 0) {
+        return res.status(404).json({ 
+          message: "Company profile not found for this user" 
+        });
+      }
+      
+      companyId = companyResult.rows[0].id;
+    }
+    
+    // Get job IDs for this company
+    const jobsResult = await pool.query(
+      "SELECT id FROM jobs WHERE company_id = $1",
+      [companyId]
+    );
+    
+    const jobIds = jobsResult.rows.map(job => job.id);
+    
+    // If no jobs, return zero counts
+    if (jobIds.length === 0) {
+      return res.status(200).json({
+        totalApplicants: 0,
+        unreadNotifications: 0
+      });
+    }
+    
+    // Count total applicants across all jobs
+    const applicantsResult = await pool.query(
+      "SELECT COUNT(*) FROM applications WHERE job_id = ANY($1::int[])",
+      [jobIds]
+    );
+    
+    // Count unread notifications
+    const notificationsResult = await pool.query(
+      "SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false",
+      [req.user.id]
+    );
+    
+    // Return the summary data
+    res.status(200).json({
+      totalApplicants: parseInt(applicantsResult.rows[0].count) || 0,
+      unreadNotifications: parseInt(notificationsResult.rows[0].count) || 0
+    });
+    
+  } catch (error) {
+    console.error("Error getting dashboard summary:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

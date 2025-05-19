@@ -14,6 +14,8 @@ export default function CompanyDashboard() {
     notifications: 0
   });
   const [companyProfile, setCompanyProfile] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     // Check if user is authenticated and has company role
@@ -29,7 +31,48 @@ export default function CompanyDashboard() {
     }
 
     fetchDashboardData();
+
+    // Setup real-time data refresh every 10 seconds
+    const intervalId = setInterval(() => {
+      fetchDashboardSummary();
+    }, 10000); // 10 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, [navigate]);
+
+  const fetchDashboardSummary = async () => {
+    if (isUpdating) return;
+    
+    try {
+      setIsUpdating(true);
+      
+      // Get company profile if not already loaded
+      const companyId = companyProfile?.id || (auth.getCurrentUser()?.company_id);
+      
+      if (!companyId) {
+        console.error("Cannot fetch summary: No company ID found");
+        return;
+      }
+      
+      // Fetch real-time summary from the dedicated endpoint
+      const response = await companyAPI.getDashboardSummary(companyId);
+      
+      if (response.data) {
+        setDashboardData(prevData => ({
+          ...prevData,
+          totalApplicants: response.data.totalApplicants || prevData.totalApplicants,
+          notifications: response.data.unreadNotifications || prevData.notifications
+        }));
+        setLastUpdated(new Date());
+      }
+    } catch (err) {
+      console.error("Error updating dashboard summary:", err);
+      // Don't show error to user for background updates
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -49,8 +92,10 @@ export default function CompanyDashboard() {
       for (const job of jobs) {
         try {
           const applicationsRes = await companyAPI.getApplicationsForJob(job.id);
+          // Extract applications array from response
+          const appsArray = applicationsRes.data.applications || [];
           // Enhance application data with job details for display
-          const jobApplications = applicationsRes.data.map(app => ({
+          const jobApplications = appsArray.map(app => ({
             ...app,
             job_id: job.id,
             job_title: job.title,
@@ -82,6 +127,7 @@ export default function CompanyDashboard() {
         notifications: unreadNotifications
       });
 
+      setLastUpdated(new Date());
       setLoading(false);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -94,6 +140,10 @@ export default function CompanyDashboard() {
     if (!dateString) return 'Unknown date';
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   if (loading) {
@@ -138,7 +188,13 @@ export default function CompanyDashboard() {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Company Dashboard</h1>
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Company Dashboard</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Last updated: {formatTime(lastUpdated)}
+              {isUpdating && <span className="ml-2 inline-block h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>}
+            </p>
+          </div>
           <Link 
             to="/company/post-job"
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

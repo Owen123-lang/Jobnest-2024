@@ -160,6 +160,11 @@ export const companyAPI = {
     return axiosInstance.get(`/companies/user/${userId}`);
   },
 
+  // Get real-time dashboard summary data
+  getDashboardSummary: (companyId) => {
+    return axiosInstance.get(`/company-admin/dashboard-summary`);
+  },
+
   // Create company profile
   createCompany: (companyData) => {
     // Check if companyData contains a logo file
@@ -298,10 +303,7 @@ export const companyAPI = {
   },
 
   // Get company applications
-  getApplicationsForJob: (jobId) => {
-    // Use correct API endpoint including /applications
-    return axiosInstance.get(`/applications/job/${jobId}/applications`);
-  },
+  getApplicationsForJob: (jobId) => axiosInstance.get(`/applications/job/${jobId}/applications`),
   
   // Update application status
   updateApplicationStatus: (applicationId, newStatus) => {
@@ -344,19 +346,16 @@ export const jobAPI = {
 // Notification API calls
 export const notificationAPI = {
   // Get user notifications with improved error handling
-  getNotifications: () => {
-    console.log('Fetching notifications...');
-    return axiosInstance.get('/notification/user')
-      .catch(error => {
-        // Handle 404 errors gracefully (possibly endpoint not implemented yet)
-        if (error.response && error.response.status === 404) {
-          console.warn('Notifications endpoint not found (404). This feature may not be implemented yet.');
-          // Return empty notifications array instead of failing
-          return { data: [] };
-        }
-        console.error('Error fetching notifications:', error);
-        throw error;
-      });
+  getNotifications: async () => {
+    try {
+      const response = await axiosInstance.get('/notification/user');
+      return { data: response.data.notifications || [] };
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        return { data: [] };
+      }
+      throw error;
+    }
   },
 
   // Mark notification as read

@@ -30,8 +30,9 @@ export const checkUserRole = (req, res, next) => {
 
 export const checkCompanyRole = (req, res, next) => {
   console.log("[checkCompanyRole] User Role:", req.user?.role);
-  if (req.user.role !== 'company') {
-    return res.status(403).json({ message: "Forbidden: Only company allowed." });
+  const role = req.user?.role;
+  if (role !== 'company' && role !== 'company_admin') {
+    return res.status(403).json({ message: "Forbidden: Only company or company admin allowed." });
   }
   next();
 };

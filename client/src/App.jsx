@@ -11,6 +11,7 @@ import RoleSelector from './components/RoleSelector';
 import CompanyDashboard from './pages/CompanyDashboard';
 import CompanyDaftarLowongan from './pages/CompanyDaftarLowongan';
 import CompanyDetailLowongan from './pages/CompanyDetailLowongan';
+import CompanyJobApplicants from './pages/CompanyJobApplicants';
 import CompanyHomePage from './pages/CompanyHomePage';
 import CompanyNotifikasi from './pages/CompanyNotifikasi';
 import CompanyPasangLowongan from './pages/CompanyPasangLowongan';
@@ -48,6 +49,7 @@ function App() {
       <Route path="/company/home" element={<CompanyHomePage />} />
       <Route path="/company/lowongan" element={<CompanyDaftarLowongan />} />
       <Route path="/company/lowongan/:id" element={<CompanyDetailLowongan />} />
+      <Route path="/company/job/:jobId/applicants" element={<CompanyJobApplicants />} />
       <Route path="/company/post-job" element={<CompanyPasangLowongan />} />
       <Route path="/company/notifikasi" element={<CompanyNotifikasi />} />
       <Route path="/company/profil" element={<CompanyProfil />} />
