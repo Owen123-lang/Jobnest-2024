@@ -296,7 +296,8 @@ export const companyAPI = {
 
   // Get company applications
   getApplicationsForJob: (jobId) => {
-    return axiosInstance.get(`/applications/job/${jobId}`);
+    // Use correct API endpoint including /applications
+    return axiosInstance.get(`/applications/job/${jobId}/applications`);
   },
   
   // Update application status

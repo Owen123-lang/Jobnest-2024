@@ -25,7 +25,8 @@ const UserFavorit = () => {
       setError(null);
       
       const response = await userAPI.getFavorites();
-      setFavoriteJobs(response.data);
+      // response.data has { count, favorites }
+      setFavoriteJobs(response.data.favorites);
     } catch (err) {
       console.error('Error fetching favorites:', err);
       setError('Failed to load favorite jobs. Please try again.');
@@ -34,11 +35,11 @@ const UserFavorit = () => {
     }
   };
 
-  const handleRemoveFavorite = async (jobId) => {
+  const handleRemoveFavorite = async (favoriteId) => {
     try {
-      await userAPI.removeFromFavorites(jobId);
-      // Update the UI by filtering out the removed job
-      setFavoriteJobs(favoriteJobs.filter(job => job.job_id !== jobId));
+      await userAPI.removeFromFavorites(favoriteId);
+      // Update the UI by filtering out the removed favorite
+      setFavoriteJobs(favoriteJobs.filter(fav => fav.id !== favoriteId));
     } catch (err) {
       console.error('Error removing favorite:', err);
       alert('Failed to remove job from favorites. Please try again.');
@@ -135,14 +136,11 @@ const UserFavorit = () => {
                   <div className="flex justify-between">
                     <h2 className="text-xl font-bold mb-1 text-left">{favorite.job_title}</h2>
                     <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleRemoveFavorite(favorite.job_id);
-                      }}
+                      onClick={(e) => { e.preventDefault(); handleRemoveFavorite(favorite.id); }}
                       className="text-red-500 hover:text-red-700 p-1"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 011.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </button>
                   </div>
@@ -174,7 +172,7 @@ const UserFavorit = () => {
                   
                   <div className="flex justify-between items-center">
                     <p className="text-gray-500 text-sm">
-                      Saved: {formatDate(favorite.created_at)}
+                      Saved: {formatDate(favorite.saved_at)}
                     </p>
                     <Link
                       to={`/user/job-details/${favorite.job_id}`}
