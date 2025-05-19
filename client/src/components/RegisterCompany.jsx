@@ -41,9 +41,9 @@ function RegisterCompany() {
     setLoading(true);
     setError('');
     setSuccess(false);
-
+  
     try {
-      // Step 1: Register user with company role and get token
+      // Step 1: Register user
       const userResponse = await auth.register({
         email: formData.email,
         password: formData.password,
@@ -57,41 +57,48 @@ function RegisterCompany() {
         vision: formData.vision,
         mission: formData.mission
       });
-      
-      // Get user ID and token from response
-      const userId = userResponse.data.user.id;
+  
       const token = userResponse.data.token;
-      
+      const userId = userResponse.data.user.id;
+  
       if (token) {
-        // Save auth data in local storage
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userResponse.data.user));
+  
+        // Step 2: Upload logo (optional)
+        if (formData.logo instanceof File) {
+          const logoForm = new FormData();
+          logoForm.append('logo', formData.logo);
+  
+          await import('axios').then(({ default: axios }) => {
+            return axios.put(`${import.meta.env.VITE_API_URL}/companies/logo`, logoForm, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
+              }
+            });
+          });
+        }
       }
-      
+  
       setSuccess(true);
-      
-      // Set a small timeout to let user see success message
       setTimeout(() => {
-        // Redirect to company profile page for completing profile setup
         navigate('/company/profil');
       }, 1500);
-      
+  
     } catch (err) {
       let errorMessage = 'Registration failed. ';
-      
       if (err.response?.data?.message) {
         errorMessage += err.response.data.message;
-      } else if (err.message) {
-        errorMessage += err.message;
       } else {
-        errorMessage += 'Please try again.';
+        errorMessage += err.message || 'Please try again.';
       }
-      
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">

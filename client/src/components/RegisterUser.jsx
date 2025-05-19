@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { auth } from '../utils/api';
 
 function RegisterUser() {
@@ -26,11 +27,26 @@ function RegisterUser() {
     setError('');
     setSuccess(false);
 
+    // Make sure we have all required fields
+    if (!formData.name || !formData.email || !formData.password) {
+      setError('All fields are required');
+      setLoading(false);
+      return;
+    }
+
+    // Prepare the complete user data payload
+    const userData = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      role: 'user'
+    };
+
     try {
-      const response = await auth.registerUser({
-        email: formData.email,
-        password: formData.password
-      });
+      // Use direct API call to ensure proper endpoint and payload
+      const response = await auth.register(userData);
+      
+      console.log('Registration successful:', response.data);
       
       setSuccess(true);
       // Auto-redirect after successful registration
@@ -38,7 +54,28 @@ function RegisterUser() {
         navigate('/login/user');
       }, 1500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      
+      // Enhanced error handling to display server validation errors
+      if (err.response) {
+        // The server responded with a status code outside the 2xx range
+        if (err.response.status === 400) {
+          // Handle validation errors from backend
+          setError(err.response.data.message || 'Invalid registration data. Please check your inputs.');
+        } else if (err.response.status === 409) {
+          // Handle conflict (likely email already exists)
+          setError('This email address is already registered. Please try logging in instead.');
+        } else {
+          // Handle other server errors
+          setError(`Server error (${err.response.status}): ${err.response.data.message || 'Unknown error occurred'}`);
+        }
+      } else if (err.request) {
+        // The request was made but no response was received (network issues)
+        setError('Network error. Please check your internet connection and try again.');
+      } else {
+        // Something happened in setting up the request
+        setError('An error occurred while processing your registration. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

@@ -41,10 +41,23 @@ export const registerUser = async (req, res) => {
         const name = companyName || email.split('@')[0]; // Default name from email if not provided
         
         const companyResult = await pool.query(
-          `INSERT INTO companies (user_id, name, website, industry, description) 
-           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-          [user.id, name, website || null, industry || null, description || null]
+          `INSERT INTO companies (
+             user_id, name, website, industry, description, size, founded, vision, mission, logo
+           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+          [
+            user.id,
+            name,
+            website || null,
+            industry || null,
+            description || null,
+            req.body.size || null,
+            req.body.founded || null,
+            req.body.vision || null,
+            req.body.mission || null,
+            null // logo akan diisi nanti oleh profile update (bukan saat register)
+          ]
         );
+        
         
         if (companyResult.rows.length > 0) {
           companyId = companyResult.rows[0].id;

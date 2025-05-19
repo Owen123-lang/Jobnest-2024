@@ -617,3 +617,63 @@ export const getAllAdmins = async (req, res) => {
 };
 
 
+// PUT /companies/logo
+export const uploadCompanyLogoOnly = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Find company by user ID
+    const result = await pool.query(`SELECT * FROM companies WHERE user_id = $1`, [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Company profile not found for this user.' });
+    }
+
+    const company = result.rows[0];
+    let logoUrl = null;
+
+    if (req.file && req.file.buffer) {
+      logoUrl = await uploadCompanyLogo(req.file);
+    } else {
+      return res.status(400).json({ message: 'Logo file is required.' });
+    }
+
+    const update = await pool.query(
+      `UPDATE companies SET logo = $1 WHERE id = $2 RETURNING *`,
+      [logoUrl, company.id]
+    );
+
+    res.status(200).json({ message: 'Logo uploaded successfully.', company: update.rows[0] });
+  } catch (error) {
+    console.error('Error uploading logo:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const updateCompanyLogoOnly = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const company = await pool.query(`SELECT * FROM companies WHERE user_id = $1`, [userId]);
+    if (company.rows.length === 0) {
+      return res.status(404).json({ message: "Company not found for this user." });
+    }
+
+    const companyId = company.rows[0].id;
+
+    let logoUrl = null;
+    if (req.file && req.file.buffer) {
+      logoUrl = await uploadCompanyLogo(req.file);
+    } else {
+      return res.status(400).json({ message: "No logo file uploaded." });
+    }
+
+    const updateLogo = await pool.query(`
+      UPDATE companies SET logo = $1 WHERE id = $2 RETURNING *;
+    `, [logoUrl, companyId]);
+
+    res.status(200).json({ message: "Logo updated successfully.", company: updateLogo.rows[0] });
+  } catch (error) {
+    console.error("Error updating logo:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

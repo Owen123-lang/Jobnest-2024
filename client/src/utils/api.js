@@ -1,16 +1,17 @@
 import axios from 'axios';
 
 // Create axios instance with base URL
-// Use environment variable if available, otherwise use relative path for proxy
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
-const API_URL = import.meta.env.VITE_API_URL || '';
+// Use environment variable if available, otherwise default to localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 
 // Create axios instance
 const axiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  timeout: 10000 // 10 second timeout
 });
 
 // Add request interceptor to include authentication token in headers
@@ -23,6 +24,31 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Response interceptor for global error handling
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle network errors
+    if (!error.response) {
+      console.error('Network Error:', error.message);
+      return Promise.reject({
+        ...error,
+        message: 'Network error. Please check your internet connection.'
+      });
+    }
+    
+    // Handle authentication errors
+    if (error.response.status === 401) {
+      // Clear token if it's invalid/expired
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // You could redirect to login here if needed
+    }
+    
+    return Promise.reject(error);
+  }
 );
 
 // Auth methods
@@ -47,6 +73,14 @@ export const auth = {
   // Register user
   register: (userData) => {
     return axiosInstance.post('/users/register', userData);
+  },
+
+  // Register user (specific to RegisterUser component)
+  registerUser: (userData) => {
+    return axiosInstance.post('/users/register', {
+      ...userData,
+      role: 'user'
+    });
   },
 
   // Login user

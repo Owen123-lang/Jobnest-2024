@@ -11,7 +11,8 @@ import {
   removeCompanyAdmin,
   getAllAdmins,
   getCompanyByUserId,
-  getMyCompanyProfile
+  getMyCompanyProfile,
+  updateCompanyLogoOnly
 } from "../controllers/companyController.js";
 import { verifyToken, checkCompanyRole, checkCompanyOwnerOrAdmin } from "../middleware/authMiddleware.js";
 
@@ -40,7 +41,8 @@ router.get("/:id", getCompanyById);
 router.get("/:id/jobs", getCompanyJobs);
 
 // Create company route with upload middleware
-router.post("/", verifyToken, upload.single('logo'), createCompany);
+router.post("/", verifyToken, checkCompanyRole, upload.single('logo'), createCompany);
+
 
 // Protected routes (authentication required)
 router.get("/user/:userId", verifyToken, getCompanyByUserId);
@@ -49,6 +51,7 @@ router.get("/profile/me", verifyToken, checkCompanyRole, getMyCompanyProfile);
 // Routes that require company owner or admin permissions
 router.put("/:id", verifyToken, checkCompanyOwnerOrAdmin, upload.single('logo'), updateCompany);
 router.delete("/:id", verifyToken, checkCompanyOwnerOrAdmin, deleteCompany);
+router.put("/logo", verifyToken, upload.single('logo'), updateCompanyLogoOnly);
 
 // Company admin management routes
 router.post("/admin", verifyToken, checkCompanyOwnerOrAdmin, addCompanyAdmin);
