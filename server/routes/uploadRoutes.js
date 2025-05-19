@@ -11,7 +11,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 router.post(
-  "/upload-cv",
+  "/upload",
   verifyToken, // Middleware to verify JWT
   uploadLimiter, // Middleware to limit upload rate
   upload.single("cv"), // Multer middleware to handle file upload

@@ -43,14 +43,11 @@ app.get("/", (req, res) => {
 //  route untuk user
 app.use("/api/users", userRoutes);
 
-// Route untuk aplikasi
-app.use("/api", applicationRoutes);
-
 // Route untuk jobs
 app.use("/api/jobs", jobRoutes);
 
 // Route untuk upload CV
-app.use("/api", uploadRoutes);
+app.use("/api/uploadCV", uploadRoutes);
 
 // Route untuk company
 app.use("/api/companies", companyRoutes);
@@ -69,6 +66,8 @@ app.use("/api/interest", interestRoutes);
 
 // Route untuk favorite
 app.use("/api/favorite", favoritesRoutes);
+
+app.use("/api/applications", applicationRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
