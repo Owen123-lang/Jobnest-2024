@@ -40,7 +40,8 @@ export default function CompanyDetailLowongan() {
       
       // Fetch applications for this job
       const applicationsResponse = await companyAPI.getApplicationsForJob(id);
-      setApplications(applicationsResponse.data);
+      // Backend returns { applications, pagination }
+      setApplications(applicationsResponse.data.applications || []);
       
       setLoading(false);
     } catch (err) {
@@ -131,6 +132,8 @@ export default function CompanyDetailLowongan() {
 
   const getApplicationStatusBadgeClass = (status) => {
     switch (status) {
+      case 'reviewed':
+        return 'bg-blue-100 text-blue-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'shortlisted':
@@ -414,18 +417,34 @@ export default function CompanyDetailLowongan() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {formatDate(application.applied_at)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {application.cv_url ? (
-                            <a 
-                              href={application.cv_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              View CV
-                            </a>
+                            <div className="flex flex-col space-y-2">
+                              <a 
+                                href={application.cv_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                View CV
+                              </a>
+                              <a 
+                                href={application.cv_url} 
+                                download={`CV-${application.full_name || application.user_email.split('@')[0]}.pdf`}
+                                className="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Download
+                              </a>
+                            </div>
                           ) : (
-                            "No CV attached"
+                            <span className="text-gray-500">No CV attached</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -440,6 +459,7 @@ export default function CompanyDetailLowongan() {
                               onChange={(e) => handleApplicationStatusChange(application.id, e.target.value)}
                               className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                             >
+                              <option value="reviewed">Reviewed</option>
                               <option value="pending">Pending</option>
                               <option value="shortlisted">Shortlisted</option>
                               <option value="interview">Interview</option>

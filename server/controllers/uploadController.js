@@ -1,6 +1,7 @@
 import cloudinary from "../config/cloudinary.js";
 import streamifier from "streamifier";
 import pool from "../config/db.js";
+import streamUploadUtil from '../utils/streamUpload.js';
 
 export const uploadCV = async (req, res) => {
   try {
@@ -60,5 +61,33 @@ export const uploadCV = async (req, res) => {
   } catch (error) {
     console.error("Error uploading CV:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Upload profile picture controller
+export const uploadProfilePicture = async (req, res) => {
+  try {
+    // Upload file to Cloudinary using utility
+    const result = await streamUploadUtil.uploadFromRequest(req, { folder: 'profiles' });
+    // Update user's profile_picture in database
+    const userId = req.user.id;
+    const query = `
+      UPDATE profiles
+      SET profile_picture = $1
+      WHERE user_id = $2
+      RETURNING *
+    `;
+    const values = [result.secure_url, userId];
+    const updateResult = await pool.query(query, values);
+    // Always return secure_url
+    const response = { secure_url: result.secure_url };
+    if (updateResult.rows.length > 0) {
+      response.profile = updateResult.rows[0];
+      response.message = 'Profile picture uploaded successfully.';
+    }
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    res.status(500).json({ message: 'Upload failed.', error: error.message });
   }
 };

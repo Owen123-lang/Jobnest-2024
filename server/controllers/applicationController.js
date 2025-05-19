@@ -138,9 +138,12 @@ export const getJobApplications = async (req, res) => {
     const offset = (page - 1) * limit;
     
     const result = await pool.query(
-      `SELECT a.id, a.user_id, a.cv_url, a.status, a.applied_at, u.email AS applicant_email
+      `SELECT a.id, a.user_id, a.cv_url, a.status, a.applied_at, 
+       u.email AS user_email, 
+       p.full_name, p.profile_picture
        FROM applications a
        JOIN users u ON a.user_id = u.id
+       LEFT JOIN profiles p ON u.id = p.user_id
        WHERE a.job_id = $1
        ORDER BY a.applied_at DESC
        LIMIT $2 OFFSET $3`,
@@ -228,12 +231,17 @@ export const updateApplicationStatus = async (req, res) => {
         notificationMessage = "There has been an update to your application.";
     }
     
-    // Insert notification (assuming notifications table exists)
-    await pool.query(
-      `INSERT INTO notifications (user_id, message, is_read, created_at) 
-       VALUES ($1, $2, false, NOW())`,
+    // Insert notification into database and get the record
+    const notifResult = await pool.query(
+      `INSERT INTO notifications (user_id, message, is_read, created_at)
+       VALUES ($1, $2, false, NOW()) RETURNING *`,
       [application.user_id, notificationMessage]
     );
+    const newNotification = notifResult.rows[0];
+    // Emit real-time notification via Socket.io
+    const io = req.app.get('io');
+    const room = `user_${application.user_id}`;
+    io.to(room).emit('newNotification', newNotification);
     
     res.status(200).json({
       message: "Application status updated successfully",

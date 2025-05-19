@@ -11,11 +11,21 @@ import skillRoutes from "../routes/skillRoutes.js";
 import notificationRoutes from "../routes/notificationRoutes.js";
 import interestRoutes from "../routes/interestRoutes.js";
 import favoritesRoutes from "../routes/favoritesRouter.js"
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
+  },
+});
 
 // Basic CORS headers
 app.use((req, res, next) => {
@@ -47,8 +57,8 @@ app.use("/api/users", userRoutes);
 // Route untuk jobs (mount before applications to avoid catch-all)
 app.use("/api/jobs", jobRoutes);
 
-// Route untuk applications
-app.use("/api/applications", applicationRoutes);
+// Route untuk aplikasi
+app.use("/api", applicationRoutes);
 
 // Route untuk upload CV
 app.use("/api", uploadRoutes);
@@ -83,4 +93,20 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Make io accessible in request handlers
+app.set('io', io);
+
+io.on("connection", (socket) => {
+  console.log("a user connected");
+
+  socket.on("joinRoom", (room) => {
+    socket.join(room);
+    console.log(`User joined room: ${room}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("user disconnected");
+  });
+});
+
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

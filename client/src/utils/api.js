@@ -1,9 +1,12 @@
 import axios from 'axios';
+import { io } from 'socket.io-client';
 
 // Create axios instance with base URL
 // Use environment variable if available, otherwise default to localhost for development
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// Determine socket server URL (strip '/api' from API_BASE_URL)
+const SOCKET_URL = API_BASE_URL.replace(/\/api$/, '');
 
 // Create axios instance
 const axiosInstance = axios.create({
@@ -368,8 +371,14 @@ export const notificationAPI = {
         console.error('Error marking notification as read:', error);
         throw error;
       });
-  }
+  },
+
+  // Mark all notifications as read
+  markAllRead: () => axiosInstance.put('/notification/read-all'),
 };
+
+// Initialize Socket.io client for real-time notifications
+export const socket = io(SOCKET_URL);
 
 // Upload file to Cloudinary via backend
 export const uploadAPI = {
