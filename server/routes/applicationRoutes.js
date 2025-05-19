@@ -1,4 +1,7 @@
 import express from "express";
+import multer from "multer";
+import { uploadLimiter } from "../middleware/ratelimiter.js";
+
 import {
   submitApplication,
   getUserApplications,
@@ -11,26 +14,35 @@ import { verifyToken, checkCompanyRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Public routes (none for applications)
+// Configure multer with memory storage
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
 
 // Protected routes - require authentication
-// Create a new job application
-router.post("/create", verifyToken, submitApplication);
+// Create a new job application (USER)
+router.post("/create",
+  verifyToken,
+  // uploadLimiter,
+  upload.single("cv"),
+  submitApplication);
 
-// Get all applications for the logged-in user
+// Get all applications for the logged-in user (USER)
 router.get("/user", verifyToken, getUserApplications);
 
-// Get a specific application by ID
-router.get("/:id", verifyToken, getApplicationById);
-
-// Update application status (pending, reviewed, accepted, rejected)
-router.put("/:id/status", verifyToken, updateApplicationStatus);
-
-// Delete an application
+// Delete an application (For Testing)
 router.delete("/:id", verifyToken, deleteApplication);
+
 
 // Company routes - require company role
 // Get all applications for a specific job posting (company access only)
 router.get("/job/:jobId/applications", verifyToken, checkCompanyRole, getJobApplications);
+
+// Update application status (pending, reviewed, accepted, rejected) (COMPANY)
+router.put("/:id/status", verifyToken, checkCompanyRole, updateApplicationStatus);
+
+// Get a specific application by ID (COMPANY)
+router.get("/:id", verifyToken, checkCompanyRole, getApplicationById);
+
 
 export default router;

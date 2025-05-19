@@ -1,46 +1,72 @@
 import pool from "../config/db.js";
+import cloudinary from "../config/cloudinary.js";
+import streamifier from "streamifier";
 
-// CREATE - Submit a new application (if not using uploadController)
+// CREATE - Submit a new application (USER)
 export const submitApplication = async (req, res) => {
-  const user_id = req.user.id; // Get from JWT token
-  let job_id, cv_url;
-
-  
-
-
-  
-  if (!job_id || !cv_url) {
-    return res.status(400).json({ message: "Job ID and CV URL are required" });
-  }
-  
   try {
+    const user_id = req.user.id; // Get user ID from the token
+
+    // validate job_id from request body
+    const job_id = req.body.job_id ? parseInt(req.body.job_id, 10) : null;
+    if (!job_id || isNaN(job_id)) {
+      return res.status(400).json({ message: "Job ID is required or invalid." });
+    }
+
+    // Validate file upload
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ message: "No CV file uploaded." });
+    }
+
     // Check if job exists
     const jobCheck = await pool.query("SELECT * FROM jobs WHERE id = $1", [job_id]);
     if (jobCheck.rows.length === 0) {
-      return res.status(404).json({ message: "Job not found" });
+      return res.status(404).json({ message: "Job not found." });
     }
     
-    // Check if user already applied for this job
-    const existingApp = await pool.query(
+    // Check if user has already applied for this job
+    const existingApplication = await pool.query(
       "SELECT * FROM applications WHERE user_id = $1 AND job_id = $2",
       [user_id, job_id]
     );
-    
-    if (existingApp.rows.length > 0) {
-      return res.status(400).json({ message: "You have already applied for this job" });
+    if (existingApplication.rows.length > 0) {
+      return res.status(400).json({ message: "You have already applied for this job." });
     }
-    
-    // Create new application
+
+    // Upload CV to Cloudinary
+    const streamUpload = (buffer) => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: "auto",
+            folder: "job_applications", // specify a folder in Cloudinary
+          },
+          (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          }
+        );
+        streamifier.createReadStream(buffer).pipe(stream);
+      });
+    }
+
+    // Upload the file to cloudinary
+    const uploadResult = await streamUpload(req.file.buffer);
+    console.log("Cloudinary upload result:", uploadResult);
+
+    // Get the secure URL from Cloudinary
+    const cv_url = uploadResult.secure_url;
+
+    // Insert application into PostgreSQL
     const result = await pool.query(
-      `INSERT INTO applications (user_id, job_id, cv_url, status, applied_at) 
-       VALUES ($1, $2, $3, 'pending', NOW()) 
-       RETURNING *`,
-      [user_id, job_id, cv_url]
-    );
+      `INSERT INTO applications (user_id, job_id, cv_url, status, applied_at)
+      VALUES ($1, $2, $3, 'pending', NOW())
+      RETURNING *`,
+      [user_id, job_id, cv_url]);
     
     res.status(201).json({
-      message: "Application submitted successfully",
-      application: result.rows[0]
+      message: "Application submitted successfully.",
+      application: result.rows[0],
     });
   } catch (error) {
     console.error("Error submitting application:", error);
@@ -48,9 +74,9 @@ export const submitApplication = async (req, res) => {
   }
 };
 
-// READ - Get user applications (already implemented)
+// READ - Get user applications (USER)
 export const getUserApplications = async (req, res) => {
-  const userId = parseInt(req.params.userId);
+  const user_id = req.user.id; // Get user ID from the token
 
   try {
     const result = await pool.query(
@@ -59,7 +85,7 @@ export const getUserApplications = async (req, res) => {
        JOIN jobs j ON a.job_id = j.id
        WHERE a.user_id = $1
        ORDER BY a.applied_at DESC`,
-      [userId]
+      [user_id]
     );
 
     res.status(200).json(result.rows);
@@ -68,7 +94,7 @@ export const getUserApplications = async (req, res) => {
   }
 };
 
-// READ - Get application by ID
+// READ - Get application by applicatiionId for a specific job (COMPANY)
 export const getApplicationById = async (req, res) => {
   const applicationId = parseInt(req.params.id);
   
@@ -97,7 +123,7 @@ export const getApplicationById = async (req, res) => {
   }
 };
 
-// READ - Get all applications for a specific job
+// READ - Get all applications by job_id for a specific job
 export const getJobApplications = async (req, res) => {
   const jobId = parseInt(req.params.jobId);
   
