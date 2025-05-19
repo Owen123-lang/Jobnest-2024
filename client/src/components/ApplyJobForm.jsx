@@ -47,7 +47,7 @@ function ApplyJobForm({ jobId, onSuccess, onCancel }) {
       const token = localStorage.getItem('token');
       
       // Use direct axios for file upload
-      await axios.post(`${API_BASE_URL}/create`, formData, {
+      await axios.post(`${API_BASE_URL}/applications/create`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
@@ -60,7 +60,7 @@ function ApplyJobForm({ jobId, onSuccess, onCancel }) {
       }
       
       // Navigate to user applications page
-      navigate('/user/applications');
+      navigate('/user/lamaran');
       
     } catch (err) {
       console.error('Error submitting application:', err);

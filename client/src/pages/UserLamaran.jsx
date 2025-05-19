@@ -28,7 +28,7 @@ const UserLamaran = () => {
       const token = localStorage.getItem('token');
       
       // Fetch applications using direct axios to ensure proper headers
-      const response = await axios.get(`${API_BASE_URL}/user`, {
+      const response = await axios.get(`${API_BASE_URL}/applications/user`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
