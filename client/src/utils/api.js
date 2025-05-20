@@ -133,14 +133,13 @@ export const userAPI = {
   },
 
   // Add job to favorites
-  addToFavorites: (jobId) => {
-    return axiosInstance.post('/favorite/create', { job_id: jobId });
-  },
+  addToFavorites: (jobId) => axiosInstance.post('/favorite/create', { job_id: jobId }),
 
-  // Remove job from favorites
-  removeFromFavorites: (favoriteId) => {
-    return axiosInstance.delete(`/favorite/delete/${favoriteId}`);
-  }
+  // Remove job from favorites by job ID
+  removeFromFavorites: (jobId) => axiosInstance.delete(`/favorite/job/${jobId}`),
+
+  // Check if a job is favorited by current user
+  checkFavorite: (jobId) => axiosInstance.get(`/favorite/check/${jobId}`)
 };
 
 // Company related API calls

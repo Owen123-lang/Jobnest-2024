@@ -110,7 +110,7 @@ export const getUserApplications = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT a.id, j.title AS job_title, a.cv_url, a.status, a.applied_at 
+      `SELECT a.id, a.job_id, j.title AS job_title, a.cv_url, a.status, a.applied_at
        FROM applications a
        JOIN jobs j ON a.job_id = j.id
        WHERE a.user_id = $1

@@ -183,18 +183,18 @@ const UserLamaran = () => {
                       <div className="mt-2 sm:flex sm:justify-between">
                         <div className="sm:flex">
                           {app.cv_url && (
-                            <a 
-                              href={app.cv_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center text-sm text-blue-600 hover:text-blue-800"
-                              onClick={(e) => e.stopPropagation()}
+                            <span
+                              className="flex items-center text-sm text-blue-600 hover:text-blue-800 cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(app.cv_url, '_blank', 'noopener');
+                              }}
                             >
                               <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
                               </svg>
                               Lihat CV
-                            </a>
+                            </span>
                           )}
                         </div>
                         <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">

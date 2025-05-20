@@ -22,25 +22,29 @@ const UserJobDetails = () => {
   }, [id]);
 
   const fetchJobDetails = async () => {
+    setLoading(true);
+    setError(null);
+    let jobResponse;
+    // Fetch job details
     try {
-      setLoading(true);
-      setError(null);
-      
-      // Get job details
-      const jobResponse = await jobAPI.getJobById(id);
+      jobResponse = await jobAPI.getJobById(id);
       setJob(jobResponse.data);
-      
-      // Get company details
-      if (jobResponse.data.company_id) {
-        const companyResponse = await companyAPI.getCompanyById(jobResponse.data.company_id);
-        setCompany(companyResponse.data);
-      }
     } catch (err) {
       console.error('Error fetching job details:', err);
       setError('Failed to load job details. Please try again.');
-    } finally {
       setLoading(false);
+      return;
     }
+    // Fetch company details but don't block job display on failure
+    if (jobResponse.data.company_id) {
+      try {
+        const companyResponse = await companyAPI.getCompanyById(jobResponse.data.company_id);
+        setCompany(companyResponse.data);
+      } catch (err) {
+        console.warn('Error fetching company details:', err);
+      }
+    }
+    setLoading(false);
   };
 
   const checkIfFavorite = async () => {
