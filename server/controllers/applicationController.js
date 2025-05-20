@@ -62,12 +62,42 @@ export const submitApplication = async (req, res) => {
       `INSERT INTO applications (user_id, job_id, cv_url, status, applied_at)
       VALUES ($1, $2, $3, 'pending', NOW())
       RETURNING *`,
-      [user_id, job_id, cv_url]);
+      [user_id, job_id, cv_url]
+    );
+    const application = result.rows[0];
+    
+    // Create notification for company with job and applicant context
+    // Fetch job title and company user ID
+    const jobInfo = await pool.query(
+      `SELECT j.title, c.user_id AS company_user_id FROM jobs j JOIN companies c ON j.company_id = c.id WHERE j.id = $1`,
+      [job_id]
+    );
+    if (jobInfo.rows.length > 0) {
+      const { title: jobTitle, company_user_id: companyUserId } = jobInfo.rows[0];
+      // Fetch applicant name or email
+      const userInfo = await pool.query(
+        `SELECT u.email, p.full_name FROM users u LEFT JOIN profiles p ON u.id = p.user_id WHERE u.id = $1`,
+        [user_id]
+      );
+      const applicantName = userInfo.rows[0].full_name || userInfo.rows[0].email;
+      const companyNotifMessage = `${applicantName} telah melamar posisi "${jobTitle}".`;
+      // Insert notification for company
+      const companyNotif = await pool.query(
+        `INSERT INTO notifications (user_id, message, is_read, created_at)
+         VALUES ($1, $2, false, NOW()) RETURNING *`,
+        [companyUserId, companyNotifMessage]
+      );
+      // Emit real-time notification to company
+      const io = req.app.get('io');
+      const roomCompany = `user_${companyUserId}`;
+      io.to(roomCompany).emit('newNotification', companyNotif.rows[0]);
+    }
     
     res.status(201).json({
       message: "Application submitted successfully.",
-      application: result.rows[0],
+      application
     });
+    return;
   } catch (error) {
     console.error("Error submitting application:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -213,22 +243,28 @@ export const updateApplicationStatus = async (req, res) => {
       [status, applicationId]
     );
     
-    // Create notification for the applicant
+    // Create notification for the applicant with job and company context
     const application = result.rows[0];
+    // Fetch job title and company name
+    const jobInfo = await pool.query(
+      `SELECT j.title, c.name AS company_name FROM jobs j JOIN companies c ON j.company_id = c.id WHERE j.id = $1`,
+      [application.job_id]
+    );
+    const { title: jobTitle, company_name: companyName } = jobInfo.rows[0] || {};
     let notificationMessage;
     
     switch (status) {
       case 'reviewed':
-        notificationMessage = "Your application has been reviewed.";
+        notificationMessage = `Your application for "${jobTitle}" at ${companyName} has been reviewed.`;
         break;
       case 'accepted':
-        notificationMessage = "Congratulations! Your application has been accepted.";
+        notificationMessage = `Congratulations! Your application for "${jobTitle}" at ${companyName} has been accepted.`;
         break;
       case 'rejected':
-        notificationMessage = "We regret to inform you that your application has been rejected.";
+        notificationMessage = `We regret to inform you that your application for "${jobTitle}" at ${companyName} has been rejected.`;
         break;
       default:
-        notificationMessage = "There has been an update to your application.";
+        notificationMessage = `Update on your application for "${jobTitle}" at ${companyName}.`;
     }
     
     // Insert notification into database and get the record

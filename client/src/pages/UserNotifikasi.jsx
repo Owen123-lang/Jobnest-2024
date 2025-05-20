@@ -38,6 +38,16 @@ export default function UserNotifikasi() {
     }).catch(err => console.error(err));
   };
 
+  // Delete individual notification
+  const handleDeleteNotification = async (id) => {
+    try {
+      await notificationAPI.deleteNotification(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+    }
+  };
+
   return (
     <div className="font-sans">
       <Navbar />
@@ -56,19 +66,26 @@ export default function UserNotifikasi() {
             <ul className="divide-y divide-gray-200 text-left">
               {notifications.map(notification => (
                 <li key={notification.id} className={`p-4 ${!notification.is_read ? 'bg-blue-50' : 'bg-white'} hover:bg-gray-50`}>  
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      {/* icon logic */}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">{notification.message || notification.content}</p>
-                      <p className="text-sm text-gray-500">{new Date(notification.created_at).toLocaleString()}</p>
-                    </div>
-                    {!notification.is_read && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <span className="inline-block h-2 w-2 rounded-full bg-blue-600"></span>
+                        {/* icon logic */}
                       </div>
-                    )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-900">{notification.message || notification.content}</p>
+                        <p className="text-sm text-gray-500">{new Date(notification.created_at).toLocaleString()}</p>
+                      </div>
+                      {!notification.is_read && (
+                        <div className="flex-shrink-0">
+                          <span className="inline-block h-2 w-2 rounded-full bg-blue-600"></span>
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => handleDeleteNotification(notification.id)} className="ml-4 text-red-500 hover:text-red-700">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v1H2.5a.5.5 0 000 1H3v9a2 2 0 002 2h10a2 2 0 002-2V6h.5a.5.5 0 000-1H16V4a2 2 0 00-2-2H6zm2 3v9a1 1 0 102 0V5H8zm4 0v9a1 1 0 102 0V5h-2z" clipRule="evenodd" />
+                      </svg>
+                    </button>
                   </div>
                 </li>
               ))}

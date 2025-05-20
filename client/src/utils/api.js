@@ -374,6 +374,11 @@ export const notificationAPI = {
 
   // Mark all notifications as read
   markAllRead: () => axiosInstance.put('/notification/read-all'),
+
+  // Delete a notification
+  deleteNotification: (notificationId) => {
+    return axiosInstance.delete('/notification/delete', { data: { notification_id: notificationId } });
+  }
 };
 
 // Initialize Socket.io client for real-time notifications

@@ -8,7 +8,7 @@ const router = express.Router();
 router.post("/create", createNotification);
 
 // Routes protected
-router.get("/user/", verifyToken, getUserNotifications);
+router.get("/user", verifyToken, getUserNotifications);
 router.put("/read/", verifyToken, markNotificationRead);
 router.put("/read-all/", verifyToken, markAllNotificationsRead);
 router.delete("/delete/", verifyToken, deleteNotification);

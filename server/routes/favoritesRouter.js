@@ -15,6 +15,8 @@ router.post("/create", verifyToken, createFavorite);
 
 // get all favorites for current user
 router.get("/user", verifyToken, getUserFavorites);
+// support both /user and /user/ paths
+router.get("/user/", verifyToken, getUserFavorites);
 
 // check if a job is favorited by current user
 router.get("/check/:job_id", verifyToken, checkFavorite);
@@ -24,6 +26,5 @@ router.delete("/delete/:id", verifyToken, deleteFavoriteByFavoriteId);
 
 // Delete by job ID
 router.delete("/job/:jobId", deleteFavoriteByJobId);
-
 
 export default router;
