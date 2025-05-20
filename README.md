@@ -5,7 +5,7 @@
 Di era persaingan kerja yang semakin ketat, mahasiswa, fresh graduate, dan masyarakat umum menghadapi tantangan besar dalam menemukan informasi lowongan kerja dan magang yang relevan. 
 
 Di sisi lain, perusahaan juga membutuhkan media yang efektif untuk menjangkau talenta-talenta muda yang potensial. Melihat kebutuhan tersebut, Jobnest hadir sebagai solusi yang menghubungkan pencari kerja dan perusahaan secara langsung, sekaligus mendukung pengembangan karier secara menyeluruh.
-<<<<<<< HEAD
+
 
 ## Apa itu Jobnest?
 
