@@ -25,7 +25,13 @@ Pengembangan web ini terbagi menjadi dua bagian, yaitu program Front End dan Bac
 - Penyimpanan lowongan favorit
 
 ## Flowchart
-![picture 24](https://i.imgur.com/Pfnopuh.png)  
+![picture 24](https://i.imgur.com/Pfnopuh.png) 
+
+## ERD
+![](https://imgur.com/aoZJWvm.png)
+
+## UML 
+![](https://imgur.com/4Huyzsq.png)
 
 
 
@@ -44,6 +50,7 @@ Pengembangan web ini terbagi menjadi dua bagian, yaitu program Front End dan Bac
 ```npm run dev```
 
 # Preview Web
+### Link Website : https://jobnest-2024.vercel.app/
 
 ## Landing Page
 Halaman ini adalah halaman pertama yang menyambut pengguna. Tampilan ini menyajikan informasi singkat tentang platform, manfaat utama bagi pencari kerja dan perusahaan, serta tombol navigasi menuju fitur penting seperti login, registrasi, dan pencarian lowongan.
