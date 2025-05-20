@@ -167,73 +167,47 @@ export const companyAPI = {
 
   // Create company profile
   createCompany: (companyData) => {
-    // Check if companyData contains a logo file
+    // If FormData instance, directly post multipart/form-data
+    if (companyData instanceof FormData) {
+      const token = localStorage.getItem('token');
+      return axios.post(`${API_BASE_URL}/companies`, companyData, {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        timeout: 30000,
+        validateStatus: status => status < 500
+      });
+    }
+
+    // Existing JSON or File logic
+    // Check if companyData contains a logo file (fallback for non-FormData usage)
     if (companyData.logo && companyData.logo instanceof File) {
       const formData = new FormData();
-      
-      // Debug the company data we're sending
-      console.log('Creating company with data:', companyData);
-      
-      // Append all non-empty company data to FormData
       Object.keys(companyData).forEach(key => {
         if (key === 'logo') {
           formData.append('logo', companyData.logo);
-        } else if (companyData[key] !== null && companyData[key] !== undefined && companyData[key] !== '') {
-          // Only append non-empty values to prevent database errors
-          formData.append(key, companyData[key].toString()); // Ensure string conversion
+        } else if (companyData[key] != null && companyData[key] !== '') {
+          formData.append(key, companyData[key].toString());
         }
       });
-      
-      // Debug logging
-      console.log('FormData entries to be sent:');
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + (pair[1] instanceof File ? `File: ${pair[1].name}` : pair[1]));
-      }
-      
-      // Use direct axios to avoid axiosInstance interceptor issues with FormData
       const token = localStorage.getItem('token');
       return axios.post(`${API_BASE_URL}/companies`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': token ? `Bearer ${token}` : undefined
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        // Add timeout and improved error handling
         timeout: 30000,
-        validateStatus: status => status < 500 // Allow 400 responses to be handled properly
-      }).catch(error => {
-        console.error('Error creating company (axios):', error);
-        
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error('Response data:', error.response.data);
-          console.error('Response status:', error.response.status);
-          console.error('Response headers:', error.response.headers);
-        } else if (error.request) {
-          // The request was made but no response was received
-          console.error('No response received:', error.request);
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          console.error('Error config:', error.config);
-          console.error('Error message:', error.message);
-        }
-        
-        // Rethrow to maintain promise rejection
-        throw error;
+        validateStatus: status => status < 500
       });
     }
-    
+
     // Filter out empty values for JSON request
     const filteredData = {};
     Object.keys(companyData).forEach(key => {
-      if (companyData[key] !== null && companyData[key] !== undefined && companyData[key] !== '') {
+      if (companyData[key] != null && companyData[key] !== '') {
         filteredData[key] = companyData[key];
       }
     });
-    
-    console.log('Creating company with JSON data:', filteredData);
-    
-    // If no logo file, use regular JSON request
+
     return axiosInstance.post('/companies', filteredData);
   },
 
@@ -263,7 +237,6 @@ export const companyAPI = {
       const token = localStorage.getItem('token');
       return axios.put(`${API_BASE_URL}/companies/${companyId}`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Authorization': token ? `Bearer ${token}` : undefined
         },
         // Add timeout and improved error handling
@@ -418,7 +391,6 @@ export const companyAdminAPI = {
       const token = localStorage.getItem('token');
       return axios.post(`${API_BASE_URL}/company-admin/profile`, profileData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Authorization': token ? `Bearer ${token}` : undefined
         },
         timeout: 30000
@@ -439,7 +411,6 @@ export const companyAdminAPI = {
       const token = localStorage.getItem('token');
       return axios.put(`${API_BASE_URL}/company-admin/profile`, profileData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Authorization': token ? `Bearer ${token}` : undefined
         },
         timeout: 30000

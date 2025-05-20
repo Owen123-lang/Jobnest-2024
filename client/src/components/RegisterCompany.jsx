@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../utils/api';
+import { auth, companyAPI } from '../utils/api';
 
 function RegisterCompany() {
   const [formData, setFormData] = useState({
@@ -20,6 +20,7 @@ function RegisterCompany() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [previewLogo, setPreviewLogo] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -30,10 +31,25 @@ function RegisterCompany() {
   };
 
   const handleFileChange = (e) => {
-    setFormData({
-      ...formData,
-      logo: e.target.files[0]
-    });
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.match('image/(png|jpeg|jpg)')) {
+        setError('Logo must be a PNG or JPG image');
+        return;
+      }
+      
+      setFormData({
+        ...formData,
+        logo: file
+      });
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewLogo(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -43,48 +59,35 @@ function RegisterCompany() {
     setSuccess(false);
   
     try {
-      // Step 1: Register user
+      // Step 1: Register user (JSON)
       const userResponse = await auth.register({
         email: formData.email,
         password: formData.password,
-        role: 'company',
-        companyName: formData.companyName,
-        website: formData.website,
-        industry: formData.industry,
-        description: formData.description,
-        size: formData.size,
-        founded: formData.founded,
-        vision: formData.vision,
-        mission: formData.mission
+        role: 'company'
       });
   
       const token = userResponse.data.token;
-      const userId = userResponse.data.user.id;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userResponse.data.user));
   
-      if (token) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(userResponse.data.user));
-  
-        // Step 2: Upload logo (optional)
-        if (formData.logo instanceof File) {
-          const logoForm = new FormData();
-          logoForm.append('logo', formData.logo);
-  
-          await import('axios').then(({ default: axios }) => {
-            return axios.put(`${import.meta.env.VITE_API_URL}/companies/logo`, logoForm, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'multipart/form-data'
-              }
-            });
-          });
-        }
+      // Step 2: Create company (FormData)
+      const companyFormData = new FormData();
+      // Use 'name' instead of 'companyName'
+      companyFormData.append('name', formData.companyName);
+      [
+        'website', 'industry', 'description', 'size', 'location',
+        'founded', 'vision', 'mission'
+      ].forEach(key => {
+        if (formData[key]) companyFormData.append(key, formData[key]);
+      });
+      if (formData.logo) {
+        companyFormData.append('logo', formData.logo);
       }
   
+      await companyAPI.createCompany(companyFormData);
+  
       setSuccess(true);
-      setTimeout(() => {
-        navigate('/company/profil');
-      }, 1500);
+      setTimeout(() => navigate('/company/profil'), 1500);
   
     } catch (err) {
       let errorMessage = 'Registration failed. ';
@@ -124,6 +127,52 @@ function RegisterCompany() {
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-5">
+            {/* Logo Upload */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Company Logo
+              </label>
+              <div className="mt-1 flex items-center">
+                {previewLogo ? (
+                  <div className="relative">
+                    <img
+                      src={previewLogo}
+                      alt="Logo preview"
+                      className="h-24 w-24 object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          logo: null
+                        });
+                        setPreviewLogo(null);
+                      }}
+                      className="absolute -top-2 -right-2 rounded-full bg-red-500 text-white p-1"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="h-24 w-24 rounded-md border-2 border-gray-300 border-dashed flex items-center justify-center">
+                    <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={handleFileChange}
+                  className="ml-4 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+              <p className="mt-1 text-sm text-gray-500">PNG or JPG up to 2MB</p>
+            </div>
+
             <div className="mb-4">
               <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
                 Company Name

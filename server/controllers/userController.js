@@ -4,7 +4,7 @@ import pool from "../config/db.js";
 
 // === REGISTER ===
 export const registerUser = async (req, res) => {
-  const {email, password, role, companyName, website, industry, description } = req.body;
+  const {email, password, role} = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required." });
@@ -34,47 +34,12 @@ export const registerUser = async (req, res) => {
 
       const user = newUser.rows[0];
       
-      // If role is 'company', automatically create a company profile
-      let companyId = null;
-      if (userRole === 'company') {
-        // Use provided company information or set defaults
-        const name = companyName || email.split('@')[0]; // Default name from email if not provided
-        
-        const companyResult = await pool.query(
-          `INSERT INTO companies (
-             user_id, name, website, industry, description, size, founded, vision, mission, logo
-           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-          [
-            user.id,
-            name,
-            website || null,
-            industry || null,
-            description || null,
-            req.body.size || null,
-            req.body.founded || null,
-            req.body.vision || null,
-            req.body.mission || null,
-            null // logo akan diisi nanti oleh profile update (bukan saat register)
-          ]
-        );
-        
-        
-        if (companyResult.rows.length > 0) {
-          companyId = companyResult.rows[0].id;
-        }
-      }
-      
       // Commit transaction
       await pool.query('COMMIT');
       
       // Generate JWT token for immediate authentication
       const token = jwt.sign(
-        { 
-          id: user.id, 
-          email: user.email, 
-          role: user.role,
-          company_id: companyId // Include company_id if applicable
-        },
+        { id: user.id, email: user.email, role: user.role },
         process.env.JWT_SECRET,
         { expiresIn: "24h" }
       );
@@ -86,8 +51,7 @@ export const registerUser = async (req, res) => {
         user: {
           id: user.id,
           email: user.email,
-          role: user.role,
-          company_id: companyId
+          role: user.role
         }
       });
       
